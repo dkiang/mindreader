@@ -3,8 +3,6 @@
  * Entry point and app coordination
  */
 
-import { isValidApiKey } from './config.js';
-import { setApiKey, getApiKey, clearApiKey, testApiConnection } from './api.js';
 import * as ui from './ui.js';
 import * as mode1 from './mode1.js';
 import * as mode2 from './mode2.js';
@@ -24,23 +22,15 @@ function init() {
   // Initialize UI
   ui.initUI();
 
-  // Check if API key exists
-  const existingKey = getApiKey();
-  if (existingKey && isValidApiKey(existingKey)) {
-    // Show app directly
-    ui.showAppContainer();
-    initializeApp();
-  } else {
-    // Show API key input
-    ui.showApiKeySection();
-  }
-
   // Setup global event listeners
   setupEventListeners();
 
   // Initialize modes
   mode1.init();
   mode2.init();
+
+  // Start with Mode 1
+  initializeApp();
 
   console.log('MINDREADER initialized');
 }
@@ -50,17 +40,6 @@ function init() {
  */
 function setupEventListeners() {
   const elements = ui.getElements();
-
-  // API Key submission
-  elements.apiKeySubmit.addEventListener('click', handleApiKeySubmit);
-  elements.apiKeyInput.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') {
-      handleApiKeySubmit();
-    }
-  });
-
-  // Change API key
-  elements.changeApiKeyBtn.addEventListener('click', handleChangeApiKey);
 
   // Mode selection buttons
   elements.mode1Btn.addEventListener('click', () => switchMode('mode1'));
@@ -74,60 +53,7 @@ function setupEventListeners() {
 }
 
 /**
- * Handle API key submission
- */
-async function handleApiKeySubmit() {
-  const elements = ui.getElements();
-  const apiKey = elements.apiKeyInput.value.trim();
-
-  // Validate API key format
-  if (!isValidApiKey(apiKey)) {
-    ui.showError('Invalid API key format. OpenAI keys start with "sk-"');
-    return;
-  }
-
-  // Show loading
-  elements.apiKeySubmit.disabled = true;
-  elements.apiKeySubmit.textContent = 'Testing...';
-
-  // Set API key
-  setApiKey(apiKey);
-
-  // Test connection
-  const result = await testApiConnection();
-
-  if (result.success) {
-    // Success! Show app
-    ui.showAppContainer();
-    initializeApp();
-  } else {
-    // Invalid key
-    ui.showError(`API connection failed: ${result.error}`);
-    clearApiKey();
-    elements.apiKeySubmit.disabled = false;
-    elements.apiKeySubmit.textContent = 'Start Learning';
-  }
-}
-
-/**
- * Handle changing API key
- */
-function handleChangeApiKey() {
-  if (confirm('Are you sure you want to change your API key? The current game will be reset.')) {
-    clearApiKey();
-    resetCurrentMode();
-    ui.showApiKeySection();
-
-    // Clear the input
-    const elements = ui.getElements();
-    elements.apiKeyInput.value = '';
-    elements.apiKeySubmit.disabled = false;
-    elements.apiKeySubmit.textContent = 'Start Learning';
-  }
-}
-
-/**
- * Initialize the main app after API key is set
+ * Initialize the main app
  */
 function initializeApp() {
   if (appState.isInitialized) return;

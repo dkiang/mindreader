@@ -18,33 +18,46 @@ An interactive web application that teaches users how language models predict an
 
 ## Quick Start
 
-### Prerequisites
-- A modern web browser (Chrome, Firefox, Safari, or Edge)
-- An OpenAI API key (get one at https://platform.openai.com/api-keys)
+### For Educators (Recommended)
 
-### Installation
+**Deploy to Vercel with Secure API Key Management:**
+
+1. Get an OpenAI API key at https://platform.openai.com/api-keys
+2. Follow the comprehensive **[Deployment Guide](DEPLOYMENT.md)** to deploy to Vercel
+3. Share the deployed URL with your students
+4. Students can use the app without needing their own API keys! 🎉
+
+This approach keeps your API key secure on the server side and allows all students to access the app.
+
+### For Local Development/Testing
 
 1. Clone or download this repository
-2. Open `index.html` in your web browser
-3. Enter your OpenAI API key when prompted
-4. Start learning!
-
-**Note:** This is a fully client-side application - no server required. Your API key is stored locally in your browser and is only sent to OpenAI's servers.
+2. Serve the files using a local HTTP server (required for ES6 modules):
+   ```bash
+   python3 -m http.server 8000
+   ```
+3. Open `http://localhost:8000` in your browser
+4. For testing, you'll need to temporarily add API key handling back (see DEPLOYMENT.md)
 
 ## Project Structure
 
 ```
 mindreader/
 ├── index.html          # Main HTML file
+├── api/
+│   └── chat.js         # Vercel serverless function (proxies to OpenAI)
 ├── css/
 │   └── styles.css      # All styling (mobile-first, responsive)
 ├── js/
 │   ├── main.js         # App initialization and coordination
 │   ├── config.js       # Configuration constants
-│   ├── api.js          # OpenAI API integration
+│   ├── api.js          # Frontend API calls (calls /api/chat)
 │   ├── ui.js           # DOM manipulation helpers
 │   ├── mode1.js        # "Guess the Next Token" game logic
 │   └── mode2.js        # "Steer the Hidden Narrative" game logic
+├── vercel.json         # Vercel deployment configuration
+├── .env.example        # Example environment variables
+├── DEPLOYMENT.md       # Comprehensive deployment guide
 └── README.md           # This file
 ```
 
@@ -110,30 +123,43 @@ Using GPT-3.5-turbo, each game typically costs less than $0.01. Monitor your usa
 
 ## Security Notes
 
-⚠️ **Important:** This application stores your API key in browser localStorage. For production use, consider:
-- Moving to a backend server to keep API keys secure
-- Implementing proper authentication
-- Adding rate limiting
+✅ **Secure Architecture:** This application uses Vercel serverless functions to keep your API key secure on the server side. Students never see or handle the API key.
+
+**Security Features:**
+- API key stored as Vercel environment variable (server-side only)
+- No API key in frontend code or browser
+- HTTPS encryption by default
+- Optional rate limiting and access codes (see DEPLOYMENT.md)
+
+For production deployment, see **[DEPLOYMENT.md](DEPLOYMENT.md)** for additional security options like rate limiting and access codes.
 
 ## Troubleshooting
 
-### "Invalid API key" error
-- Verify your API key starts with "sk-"
+### "Server configuration error"
+- Ensure `OPENAI_API_KEY` environment variable is set in Vercel
+- Check that the key is valid and starts with "sk-"
+- Redeploy after adding/updating environment variables
+
+### "Invalid API key" or "API Error"
+- Verify your OpenAI API key in Vercel environment variables
 - Check that your key is active at https://platform.openai.com/api-keys
 - Ensure you have available API credits
+- Check Vercel function logs for detailed error messages
 
 ### "Rate limit reached" error
-- Wait a few seconds before trying again
+- OpenAI rate limit reached - wait a few moments
 - Check your rate limits at https://platform.openai.com/account/limits
+- Consider implementing rate limiting (see DEPLOYMENT.md)
 
 ### Slow responses
 - Consider using GPT-3.5-turbo instead of GPT-4 for faster responses
 - Check your internet connection
+- Check Vercel function performance in dashboard
 
 ### UI not loading
 - Ensure JavaScript is enabled in your browser
 - Check the browser console for errors (F12)
-- Make sure all files are in the correct directory structure
+- Verify deployment succeeded in Vercel dashboard
 
 ## Future Enhancements
 
@@ -143,7 +169,7 @@ Potential additions (not in current version):
 - Shareable challenge links
 - Session export to JSON
 - Free play mode with real-time probability display
-- Backend server for secure API key management
+- Advanced rate limiting with Redis/Vercel KV
 
 ## License
 

@@ -8,26 +8,8 @@
     <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
-    <!-- API Key Setup Section -->
-    <div id="api-key-section" class="api-key-container">
-        <div class="api-key-content">
-            <h2>Welcome to MINDREADER</h2>
-            <p>To get started, please enter your OpenAI API key:</p>
-            <input
-                type="password"
-                id="api-key-input"
-                placeholder="sk-..."
-                aria-label="OpenAI API Key"
-            >
-            <button id="api-key-submit" class="primary-btn">Start Learning</button>
-            <p class="api-key-note">
-                <small>Your API key is stored locally and never sent anywhere except OpenAI's servers.</small>
-            </p>
-        </div>
-    </div>
-
-    <!-- Main App Container (hidden until API key provided) -->
-    <div id="app-container" class="hidden">
+    <!-- Main App Container -->
+    <div id="app-container">
         <!-- Header with Title and Mode Selector -->
         <header class="app-header">
             <h1>MINDREADER</h1>
@@ -153,27 +135,10 @@
         <!-- Footer -->
         <footer class="app-footer">
             <p>MINDREADER - An interactive tool to learn how language models predict text</p>
-            <button id="change-api-key-btn" class="text-btn">Change API Key</button>
         </footer>
     </div>
 
     <!-- Scripts -->
-    <!-- TESTING ONLY: Hardcode API key here -->
-    <script type="module">
-        // IMPORTANT: Replace with your OpenAI API key for testing
-        // Set to null or empty string to use the normal API key input screen
-        const HARDCODED_API_KEY = ""; // Replace with "sk-..." to bypass API key screen
-
-        console.log('Checking for hardcoded API key...');
-        if (HARDCODED_API_KEY && HARDCODED_API_KEY.startsWith('sk-')) {
-            // Store the API key in localStorage so main.js can use it
-            localStorage.setItem('mindreader_api_key', HARDCODED_API_KEY);
-            console.log('✓ Hardcoded API key loaded successfully');
-            console.log('✓ Key starts with:', HARDCODED_API_KEY.substring(0, 10) + '...');
-        } else {
-            console.log('No hardcoded API key found - will show input screen');
-        }
-    </script>
     <script type="module" src="js/main.js"></script>
 </body>
 </html>

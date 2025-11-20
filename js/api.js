@@ -1,59 +1,32 @@
 /**
- * API Module - Handles all OpenAI API interactions
+ * API Module - Handles all API interactions via Vercel serverless functions
  */
 
 import { CONFIG } from './config.js';
 
-let apiKey = null;
-
 /**
- * Set the API key for subsequent requests
- */
-export function setApiKey(key) {
-  apiKey = key;
-  localStorage.setItem(CONFIG.storage.apiKey, key);
-}
-
-/**
- * Get the stored API key
- */
-export function getApiKey() {
-  if (!apiKey) {
-    apiKey = localStorage.getItem(CONFIG.storage.apiKey);
-  }
-  return apiKey;
-}
-
-/**
- * Clear the stored API key
- */
-export function clearApiKey() {
-  apiKey = null;
-  localStorage.removeItem(CONFIG.storage.apiKey);
-}
-
-/**
- * Make a request to OpenAI API
+ * Make a request to our Vercel serverless function (which proxies to OpenAI)
  */
 async function makeOpenAIRequest(messages, options = {}) {
-  const key = getApiKey();
-  if (!key) {
-    throw new Error('API key not set');
-  }
-
   const requestBody = {
-    model: options.model || CONFIG.api.model,
     messages: messages,
     temperature: options.temperature !== undefined ? options.temperature : 0.7,
-    max_tokens: options.maxTokens || CONFIG.api.maxTokens,
-    ...options.additionalParams
+    max_tokens: options.maxTokens || CONFIG.api.maxTokens
   };
 
-  const response = await fetch(CONFIG.api.endpoint, {
+  // Add logprobs parameters if present
+  if (options.additionalParams?.logprobs) {
+    requestBody.logprobs = options.additionalParams.logprobs;
+  }
+  if (options.additionalParams?.top_logprobs) {
+    requestBody.top_logprobs = options.additionalParams.top_logprobs;
+  }
+
+  // Call our serverless function instead of OpenAI directly
+  const response = await fetch('/api/chat', {
     method: 'POST',
     headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${key}`
+      'Content-Type': 'application/json'
     },
     body: JSON.stringify(requestBody)
   });
@@ -66,11 +39,29 @@ async function makeOpenAIRequest(messages, options = {}) {
     } else if (response.status === 401) {
       throw new Error('INVALID_API_KEY');
     } else {
-      throw new Error(`API Error: ${errorData.error?.message || response.statusText}`);
+      throw new Error(`API Error: ${errorData.error || response.statusText}`);
     }
   }
 
   return await response.json();
+}
+
+/**
+ * Stub functions for API key management (no longer needed with serverless backend)
+ */
+export function setApiKey(key) {
+  // No-op: API key is now managed server-side
+  console.log('API key management handled by server');
+}
+
+export function getApiKey() {
+  // Always return truthy value since server handles authentication
+  return 'server-managed';
+}
+
+export function clearApiKey() {
+  // No-op: API key is now managed server-side
+  console.log('API key management handled by server');
 }
 
 /**

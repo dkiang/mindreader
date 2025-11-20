@@ -104,7 +104,7 @@ async function handleNudgeSubmit() {
 
   // Validate nudge
   if (!nudge) {
-    ui.showFeedback('Please enter a nudge phrase.', 'neutral', false);
+    ui.showFeedback('Please enter a nudge phrase.', 'neutral', false, 0);
     return;
   }
 
@@ -113,12 +113,15 @@ async function handleNudgeSubmit() {
     ui.showFeedback(
       `Your nudge is too long (${wordCount} words). Maximum is ${CONFIG.mode2.maxNudgeWords} words.`,
       'error',
-      false
+      false,
+      0
     );
     return;
   }
 
-  // Disable input while processing
+  // Clear feedback and disable input while processing
+  ui.hideFeedback();
+
   elements.nudgeInput.disabled = true;
   elements.submitNudgeBtn.disabled = true;
 
@@ -239,13 +242,14 @@ function provideFeedback() {
     type = 'neutral';
   }
 
-  // Show feedback with dismiss button - re-enable input when dismissed
-  ui.showFeedback(message, type, true, () => {
-    // Re-enable input after user dismisses feedback
-    elements.nudgeInput.disabled = false;
-    elements.submitNudgeBtn.disabled = false;
-    elements.nudgeInput.focus();
-  });
+  // Show feedback without dismiss button and persist indefinitely (duration = 0)
+  // The feedback will stay visible until replaced by the next nudge's feedback
+  ui.showFeedback(message, type, false, 0);
+
+  // Re-enable input immediately so user can type next nudge
+  elements.nudgeInput.disabled = false;
+  elements.submitNudgeBtn.disabled = false;
+  elements.nudgeInput.focus();
 }
 
 /**

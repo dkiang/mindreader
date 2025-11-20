@@ -11,11 +11,7 @@ const elements = {};
  * Initialize DOM element cache
  */
 export function initUI() {
-  elements.apiKeySection = document.getElementById('api-key-section');
   elements.appContainer = document.getElementById('app-container');
-  elements.apiKeyInput = document.getElementById('api-key-input');
-  elements.apiKeySubmit = document.getElementById('api-key-submit');
-  elements.changeApiKeyBtn = document.getElementById('change-api-key-btn');
 
   elements.mode1Btn = document.getElementById('mode1-btn');
   elements.mode2Btn = document.getElementById('mode2-btn');
@@ -94,9 +90,9 @@ export function hideLoading() {
  * @param {string} message - The message to display
  * @param {string} type - Type of message: 'success', 'error', 'info', 'neutral'
  * @param {boolean} dismissible - Whether to show dismiss button (default: true)
- * @param {Function} onDismiss - Optional callback when dismissed
+ * @param {Function|number} onDismissOrDuration - Optional callback when dismissed, or duration in ms (0 = persist)
  */
-export function showFeedback(message, type = 'neutral', dismissible = true, onDismiss = null) {
+export function showFeedback(message, type = 'neutral', dismissible = true, onDismissOrDuration = null) {
   const feedbackEl = elements.feedbackMessage;
 
   // Clear previous content and any existing timers
@@ -112,6 +108,10 @@ export function showFeedback(message, type = 'neutral', dismissible = true, onDi
   messageSpan.className = 'feedback-text';
   feedbackEl.appendChild(messageSpan);
 
+  // Determine if onDismissOrDuration is a callback or duration
+  const onDismiss = typeof onDismissOrDuration === 'function' ? onDismissOrDuration : null;
+  const duration = typeof onDismissOrDuration === 'number' ? onDismissOrDuration : null;
+
   // Add dismiss button if dismissible
   if (dismissible) {
     const dismissBtn = document.createElement('button');
@@ -124,12 +124,18 @@ export function showFeedback(message, type = 'neutral', dismissible = true, onDi
       }
     };
     feedbackEl.appendChild(dismissBtn);
-  } else {
-    // If not dismissible, auto-hide after 2 seconds
+  } else if (duration !== null && duration > 0) {
+    // If not dismissible and duration specified, auto-hide after duration
+    feedbackEl._autoHideTimer = setTimeout(() => {
+      hideFeedback();
+    }, duration);
+  } else if (duration === null) {
+    // Backward compatibility: if no duration specified, auto-hide after 2 seconds
     feedbackEl._autoHideTimer = setTimeout(() => {
       hideFeedback();
     }, 2000);
   }
+  // If duration === 0, don't set any timer (persist indefinitely)
 
   feedbackEl.className = `feedback-message ${type}`;
   show(feedbackEl);
@@ -428,21 +434,6 @@ export function clearGameUI() {
   elements.nudgeInput.value = '';
 }
 
-/**
- * Show API key section
- */
-export function showApiKeySection() {
-  show(elements.apiKeySection);
-  hide(elements.appContainer);
-}
-
-/**
- * Show app container
- */
-export function showAppContainer() {
-  hide(elements.apiKeySection);
-  show(elements.appContainer);
-}
 
 /**
  * Get DOM elements (for use by other modules)
