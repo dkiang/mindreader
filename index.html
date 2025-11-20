@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="MINDREADER - Learn how AI predicts next tokens through interactive games">
+    <title>MINDREADER - Next-Token Prediction Simulator</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <!-- API Key Setup Section -->
+    <div id="api-key-section" class="api-key-container">
+        <div class="api-key-content">
+            <h2>Welcome to MINDREADER</h2>
+            <p>To get started, please enter your OpenAI API key:</p>
+            <input
+                type="password"
+                id="api-key-input"
+                placeholder="sk-..."
+                aria-label="OpenAI API Key"
+            >
+            <button id="api-key-submit" class="primary-btn">Start Learning</button>
+            <p class="api-key-note">
+                <small>Your API key is stored locally and never sent anywhere except OpenAI's servers.</small>
+            </p>
+        </div>
+    </div>
+
+    <!-- Main App Container (hidden until API key provided) -->
+    <div id="app-container" class="hidden">
+        <!-- Header with Title and Mode Selector -->
+        <header class="app-header">
+            <h1>MINDREADER</h1>
+            <p class="subtitle">Next-Token Prediction Simulator</p>
+
+            <div class="mode-selector">
+                <button id="mode1-btn" class="mode-btn active" data-mode="mode1">
+                    Guess the Next Token
+                </button>
+                <button id="mode2-btn" class="mode-btn" data-mode="mode2">
+                    Steer the Hidden Narrative
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Text Context Display -->
+            <section id="text-display" class="text-display">
+                <div id="current-text" class="current-text">
+                    <!-- Text will be dynamically inserted here -->
+                </div>
+            </section>
+
+            <!-- Mode-Specific Interaction Area -->
+            <section id="interaction-area" class="interaction-area">
+                <!-- Mode 1: Token Buttons -->
+                <div id="mode1-controls" class="mode-controls">
+                    <div id="token-buttons" class="token-buttons">
+                        <!-- Buttons will be dynamically generated -->
+                    </div>
+                </div>
+
+                <!-- Mode 2: Nudge Input -->
+                <div id="mode2-controls" class="mode-controls hidden">
+                    <div class="nudge-input-container">
+                        <label for="nudge-input">Enter your nudge (max 6 words):</label>
+                        <input
+                            type="text"
+                            id="nudge-input"
+                            placeholder="Type a short phrase..."
+                            maxlength="50"
+                            aria-label="Nudge input"
+                        >
+                        <button id="submit-nudge-btn" class="primary-btn">Submit Nudge</button>
+                    </div>
+                    <div class="turn-counter">
+                        <span>Turn: <span id="current-turn">0</span> / <span id="max-turns">10</span></span>
+                    </div>
+                </div>
+
+                <!-- Start/Reset Controls -->
+                <div id="start-controls" class="start-controls">
+                    <button id="start-game-btn" class="primary-btn large-btn">Start Game</button>
+                </div>
+            </section>
+
+            <!-- Feedback and Probability Display -->
+            <section id="feedback-area" class="feedback-area">
+                <!-- Mode 1: Probability Table -->
+                <div id="probability-display" class="probability-display hidden">
+                    <h3>Token Probabilities</h3>
+                    <table id="probability-table" class="probability-table">
+                        <thead>
+                            <tr>
+                                <th>Token</th>
+                                <th>Probability</th>
+                                <th>Rank</th>
+                            </tr>
+                        </thead>
+                        <tbody id="probability-table-body">
+                            <!-- Rows will be dynamically generated -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Mode 2: Probability Meter -->
+                <div id="probability-meter-container" class="probability-meter-container hidden">
+                    <h3>Target Probability</h3>
+                    <div class="probability-meter">
+                        <div id="probability-meter-fill" class="probability-meter-fill" style="width: 0%;">
+                            <span id="probability-meter-text" class="probability-meter-text">0%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Feedback Messages -->
+                <div id="feedback-message" class="feedback-message">
+                    <!-- Dynamic feedback will appear here -->
+                </div>
+
+                <!-- Score Display (Mode 1) -->
+                <div id="score-display" class="score-display hidden">
+                    Score: <span id="score">0</span> / <span id="total-rounds">5</span>
+                </div>
+
+                <!-- Round Counter (Mode 1) -->
+                <div id="round-display" class="round-display hidden">
+                    Round: <span id="current-round">1</span> / <span id="max-rounds">5</span>
+                </div>
+            </section>
+
+            <!-- End Screen -->
+            <section id="end-screen" class="end-screen hidden">
+                <div class="end-screen-content">
+                    <h2 id="end-title">Game Complete!</h2>
+                    <div id="end-results">
+                        <!-- Results will be dynamically generated -->
+                    </div>
+                    <button id="play-again-btn" class="primary-btn large-btn">Play Again</button>
+                </div>
+            </section>
+
+            <!-- Loading State -->
+            <div id="loading-overlay" class="loading-overlay hidden">
+                <div class="loading-spinner">
+                    <div class="spinner"></div>
+                    <p>Thinking...</p>
+                </div>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="app-footer">
+            <p>MINDREADER - An interactive tool to learn how language models predict text</p>
+            <button id="change-api-key-btn" class="text-btn">Change API Key</button>
+        </footer>
+    </div>
+
+    <!-- Scripts -->
+    <!-- TESTING ONLY: Hardcode API key here -->
+    <script type="module">
+        // IMPORTANT: Replace with your OpenAI API key for testing
+        // Set to null or empty string to use the normal API key input screen
+        const HARDCODED_API_KEY = ""; // Replace with "sk-..." to bypass API key screen
+
+        console.log('Checking for hardcoded API key...');
+        if (HARDCODED_API_KEY && HARDCODED_API_KEY.startsWith('sk-')) {
+            // Store the API key in localStorage so main.js can use it
+            localStorage.setItem('mindreader_api_key', HARDCODED_API_KEY);
+            console.log('✓ Hardcoded API key loaded successfully');
+            console.log('✓ Key starts with:', HARDCODED_API_KEY.substring(0, 10) + '...');
+        } else {
+            console.log('No hardcoded API key found - will show input screen');
+        }
+    </script>
+    <script type="module" src="js/main.js"></script>
+</body>
+</html>
