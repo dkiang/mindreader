@@ -27,7 +27,7 @@ An interactive web application that teaches users how language models predict an
 3. Share the deployed URL with your students
 4. Students can use the app without needing their own API keys! 🎉
 
-This approach keeps your API key secure on the server side and allows all students to access the app.
+This approach keeps your API key secure on the server side and allows all students to access the app. 
 
 ### For Local Development/Testing
 
