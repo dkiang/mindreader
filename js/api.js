@@ -124,14 +124,59 @@ export async function getNextTokenDistribution(prompt, logprobs = CONFIG.mode1.l
     // Sort by probability (should already be sorted, but just to be sure)
     tokenDistribution.sort((a, b) => b.probability - a.probability);
 
-    // Re-assign ranks after sorting
-    tokenDistribution.forEach((item, index) => {
+    // Deduplicate tokens - keep only the highest probability version of each unique token
+    // This handles cases where "hidden" and " hidden" both appear
+    const seenTokens = new Map();
+    const deduplicatedDistribution = [];
+    const normalizedChosenToken = firstTokenData.token.trim();
+
+    for (const item of tokenDistribution) {
+      const normalizedToken = item.token.trim();
+
+      // Skip empty tokens
+      if (!normalizedToken) continue;
+
+      // If we haven't seen this token, keep it
+      if (!seenTokens.has(normalizedToken)) {
+        seenTokens.set(normalizedToken, true);
+        deduplicatedDistribution.push({
+          token: normalizedToken, // Display version (trimmed for buttons)
+          originalToken: item.token, // Preserve original with spacing for appending
+          logprob: item.logprob,
+          probability: item.probability,
+          rank: 0, // Will be reassigned below
+          isChosen: normalizedToken === normalizedChosenToken
+        });
+      }
+    }
+
+    // Re-assign ranks after deduplication
+    deduplicatedDistribution.forEach((item, index) => {
       item.rank = index + 1;
     });
 
+    // Ensure the chosen token is in the distribution
+    const chosenTokenInDistribution = deduplicatedDistribution.find(t => t.isChosen);
+    if (!chosenTokenInDistribution) {
+      console.warn('Chosen token not found in distribution, adding it');
+      deduplicatedDistribution.unshift({
+        token: normalizedChosenToken,
+        originalToken: firstTokenData.token,
+        logprob: firstTokenData.logprob || 0,
+        probability: Math.exp(firstTokenData.logprob || 0),
+        rank: 1,
+        isChosen: true
+      });
+      // Re-rank all items
+      deduplicatedDistribution.forEach((item, index) => {
+        item.rank = index + 1;
+      });
+    }
+
     return {
-      chosenToken: firstTokenData.token,
-      distribution: tokenDistribution,
+      chosenToken: normalizedChosenToken,
+      chosenOriginalToken: firstTokenData.token, // Keep original with spacing
+      distribution: deduplicatedDistribution,
       fullContent: content
     };
   } catch (error) {

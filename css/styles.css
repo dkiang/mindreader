@@ -477,11 +477,41 @@ body {
     min-height: 50px;
     display: flex;
     align-items: center;
-    justify-content: center;
+    justify-content: space-between;
+    gap: var(--spacing-md);
+    flex-wrap: wrap;
 }
 
 .feedback-message:empty {
     display: none;
+}
+
+.feedback-text {
+    flex: 1;
+    min-width: 200px;
+}
+
+.feedback-dismiss-btn {
+    padding: 8px 16px;
+    background: rgba(255, 255, 255, 0.9);
+    border: 2px solid currentColor;
+    border-radius: var(--border-radius-sm);
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    color: inherit;
+    min-height: 36px;
+    white-space: nowrap;
+}
+
+.feedback-dismiss-btn:hover {
+    background: rgba(255, 255, 255, 1);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.feedback-dismiss-btn:active {
+    transform: translateY(0);
 }
 
 .feedback-message.success {

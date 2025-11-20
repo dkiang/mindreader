@@ -90,27 +90,60 @@ export function hideLoading() {
 }
 
 /**
- * Display feedback message
+ * Display feedback message with optional dismiss button
  * @param {string} message - The message to display
  * @param {string} type - Type of message: 'success', 'error', 'info', 'neutral'
- * @param {number} duration - How long to display (ms), 0 for permanent
+ * @param {boolean} dismissible - Whether to show dismiss button (default: true)
+ * @param {Function} onDismiss - Optional callback when dismissed
  */
-export function showFeedback(message, type = 'neutral', duration = CONFIG.ui.feedbackDisplayTime) {
+export function showFeedback(message, type = 'neutral', dismissible = true, onDismiss = null) {
   const feedbackEl = elements.feedbackMessage;
-  feedbackEl.textContent = message;
+
+  // Clear previous content and any existing timers
+  feedbackEl.innerHTML = '';
+  if (feedbackEl._autoHideTimer) {
+    clearTimeout(feedbackEl._autoHideTimer);
+    feedbackEl._autoHideTimer = null;
+  }
+
+  // Create message span
+  const messageSpan = document.createElement('span');
+  messageSpan.textContent = message;
+  messageSpan.className = 'feedback-text';
+  feedbackEl.appendChild(messageSpan);
+
+  // Add dismiss button if dismissible
+  if (dismissible) {
+    const dismissBtn = document.createElement('button');
+    dismissBtn.textContent = 'Continue';
+    dismissBtn.className = 'feedback-dismiss-btn';
+    dismissBtn.onclick = () => {
+      hideFeedback();
+      if (onDismiss) {
+        onDismiss();
+      }
+    };
+    feedbackEl.appendChild(dismissBtn);
+  } else {
+    // If not dismissible, auto-hide after 2 seconds
+    feedbackEl._autoHideTimer = setTimeout(() => {
+      hideFeedback();
+    }, 2000);
+  }
+
   feedbackEl.className = `feedback-message ${type}`;
   show(feedbackEl);
-
-  if (duration > 0) {
-    setTimeout(() => {
-      hide(feedbackEl);
-    }, duration);
-  }
 }
 
 export function hideFeedback() {
+  // Clear any auto-hide timer
+  if (elements.feedbackMessage._autoHideTimer) {
+    clearTimeout(elements.feedbackMessage._autoHideTimer);
+    elements.feedbackMessage._autoHideTimer = null;
+  }
+
   hide(elements.feedbackMessage);
-  elements.feedbackMessage.textContent = '';
+  elements.feedbackMessage.innerHTML = '';
 }
 
 /**
@@ -284,7 +317,7 @@ export function hideEndScreen() {
 /**
  * Create end screen content for Mode 1
  */
-export function createMode1EndScreen(score, total, finalText) {
+export function createMode1EndScreen(score, total, startingPrompt, gameText, completion) {
   const percentage = Math.round((score / total) * 100);
 
   let message = '';
@@ -298,6 +331,23 @@ export function createMode1EndScreen(score, total, finalText) {
     message = "Keep learning! AI often chooses the most common, safest options.";
   }
 
+  // Format the complete sentence with the game portion highlighted
+  // The starting prompt is shown, then the game portion in bold, then the completion
+  const gamePlayedPortion = gameText.substring(startingPrompt.length);
+
+  // Ensure there's a space before the completion text
+  let formattedCompletion = '';
+  if (completion) {
+    // Add a space before completion if it doesn't start with one or punctuation
+    formattedCompletion = (completion.startsWith(' ') || /^[.,!?;:]/.test(completion))
+      ? completion
+      : ' ' + completion;
+  }
+
+  const completeSentence = formattedCompletion
+    ? `${startingPrompt}<strong>${gamePlayedPortion}</strong>${formattedCompletion}`
+    : `${startingPrompt}<strong>${gamePlayedPortion}</strong>`;
+
   const content = `
     <div class="end-results-section">
       <h3>Your Score</h3>
@@ -307,8 +357,13 @@ export function createMode1EndScreen(score, total, finalText) {
       <p>${message}</p>
     </div>
     <div class="end-results-section">
-      <h3>Final Text</h3>
-      <p style="font-style: italic;">"${finalText}"</p>
+      <h3>Complete Sentence</h3>
+      <p style="font-style: italic; line-height: 1.8; font-size: 1.1rem;">
+        "${completeSentence}"
+      </p>
+      <p style="font-size: 0.9rem; color: #666; margin-top: 8px;">
+        <strong>Bold text</strong> shows the tokens you played during the game.
+      </p>
     </div>
     <div class="end-results-section">
       <h3>Key Insights</h3>
@@ -399,13 +454,13 @@ export function getElements() {
 /**
  * Show error message
  */
-export function showError(message) {
-  showFeedback(message, 'error', 5000);
+export function showError(message, onDismiss = null) {
+  showFeedback(message, 'error', true, onDismiss);
 }
 
 /**
  * Show success message
  */
-export function showSuccess(message) {
-  showFeedback(message, 'success', CONFIG.ui.feedbackDisplayTime);
+export function showSuccess(message, onDismiss = null) {
+  showFeedback(message, 'success', true, onDismiss);
 }

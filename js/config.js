@@ -8,7 +8,7 @@ export const CONFIG = {
   mode1: {
     rounds: 5,                    // Number of rounds per game
     logprobCount: 10,             // Number of logprobs to request from API
-    temperature: 0.2,             // Temperature for AI generation (low for consistency)
+    temperature: 0,               // Temperature 0 = deterministic (always chooses #1 token)
 
     // Token selection thresholds for creating 4 options
     tokenSelection: {

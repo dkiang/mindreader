@@ -78,6 +78,10 @@ export async function startGame() {
   // Update turn display
   ui.updateTurn(gameState.currentTurn, gameState.maxTurns);
 
+  // Set initial probability meter to 0%
+  ui.updateProbabilityMeter(0);
+  gameState.probabilityHistory.push(0);
+
   // Enable nudge input
   const elements = ui.getElements();
   elements.nudgeInput.disabled = false;
@@ -85,8 +89,8 @@ export async function startGame() {
   elements.nudgeInput.value = '';
   elements.nudgeInput.focus();
 
-  // Calculate initial probability
-  await updateProbability();
+  // Don't calculate initial probability - start at 0%
+  // Probability will be calculated after the first nudge
 }
 
 /**
@@ -100,7 +104,7 @@ async function handleNudgeSubmit() {
 
   // Validate nudge
   if (!nudge) {
-    ui.showFeedback('Please enter a nudge phrase.', 'neutral', 1500);
+    ui.showFeedback('Please enter a nudge phrase.', 'neutral', false);
     return;
   }
 
@@ -109,7 +113,7 @@ async function handleNudgeSubmit() {
     ui.showFeedback(
       `Your nudge is too long (${wordCount} words). Maximum is ${CONFIG.mode2.maxNudgeWords} words.`,
       'error',
-      2000
+      false
     );
     return;
   }
@@ -136,9 +140,6 @@ async function handleNudgeSubmit() {
     // Calculate new probability
     await updateProbability();
 
-    // Provide feedback on probability change
-    provideFeedback();
-
     // Check win condition
     if (gameState.currentProbability >= 100) {
       gameState.hasWon = true;
@@ -152,25 +153,26 @@ async function handleNudgeSubmit() {
       return;
     }
 
-    // Re-enable input
-    elements.nudgeInput.disabled = false;
-    elements.submitNudgeBtn.disabled = false;
-    elements.nudgeInput.focus();
+    // Provide feedback on probability change
+    // Input will be re-enabled when user dismisses the feedback
+    provideFeedback();
 
   } catch (error) {
     console.error('Error handling nudge:', error);
 
+    let errorMessage = 'Error processing nudge. Please try again.';
     if (error.message === 'RATE_LIMIT') {
-      ui.showError('API rate limit reached. Please wait a moment and try again.');
+      errorMessage = 'API rate limit reached. Please wait a moment and try again.';
     } else if (error.message === 'INVALID_API_KEY') {
-      ui.showError('Invalid API key. Please check your API key and try again.');
-    } else {
-      ui.showError('Error processing nudge. Please try again.');
+      errorMessage = 'Invalid API key. Please check your API key and try again.';
     }
 
-    // Re-enable input
-    elements.nudgeInput.disabled = false;
-    elements.submitNudgeBtn.disabled = false;
+    // Show error and re-enable input when dismissed
+    ui.showError(errorMessage, () => {
+      elements.nudgeInput.disabled = false;
+      elements.submitNudgeBtn.disabled = false;
+      elements.nudgeInput.focus();
+    });
 
     // Revert turn if error occurred
     if (gameState.currentTurn > 0) {
@@ -215,6 +217,7 @@ async function updateProbability() {
 function provideFeedback() {
   const change = gameState.currentProbability - gameState.previousProbability;
   const feedback = CONFIG.mode2.feedback;
+  const elements = ui.getElements();
 
   let message = '';
   let type = 'neutral';
@@ -236,7 +239,13 @@ function provideFeedback() {
     type = 'neutral';
   }
 
-  ui.showFeedback(message, type, 3000);
+  // Show feedback with dismiss button - re-enable input when dismissed
+  ui.showFeedback(message, type, true, () => {
+    // Re-enable input after user dismisses feedback
+    elements.nudgeInput.disabled = false;
+    elements.submitNudgeBtn.disabled = false;
+    elements.nudgeInput.focus();
+  });
 }
 
 /**

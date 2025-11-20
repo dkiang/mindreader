@@ -168,13 +168,16 @@ function switchMode(mode) {
     elements.mode1Btn.classList.remove('active');
 
     ui.hide('mode1Controls');
-    ui.show('mode2Controls');
+    ui.hide('mode2Controls'); // Hide nudge controls initially
     ui.show('startControls');
   }
 
   // Reset UI
   ui.clearGameUI();
   ui.hideEndScreen();
+
+  // Re-enable start button
+  elements.startGameBtn.disabled = false;
 }
 
 /**
@@ -212,9 +215,14 @@ async function handleStartGame() {
  * Handle play again button
  */
 function handlePlayAgain() {
+  const elements = ui.getElements();
+
   ui.hideEndScreen();
   resetCurrentMode();
   ui.show('startControls');
+
+  // Re-enable start button
+  elements.startGameBtn.disabled = false;
 }
 
 /**
