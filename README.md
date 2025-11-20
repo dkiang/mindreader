@@ -20,7 +20,7 @@ An interactive web application that teaches users how language models predict an
 
 ### For Educators (Recommended)
 
-**Deploy to Vercel with Secure API Key Management:**
+**Deploy to Vercel with Secure API Key Management:** 
 
 1. Get an OpenAI API key at https://platform.openai.com/api-keys
 2. Follow the comprehensive **[Deployment Guide](DEPLOYMENT.md)** to deploy to Vercel
