@@ -25,7 +25,8 @@ export default async function handler(req, res) {
         messages: [{ role: "user", content: prompt }],
         max_tokens: 1,
         temperature: 0,
-        logprobs: 10  // get distribution
+        logprobs: true,
+        top_logprobs: 10
       });
 
       const choice = response.choices[0];

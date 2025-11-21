@@ -1,0 +1,12 @@
+{
+  "name": "mindreader",
+  "version": "1.0.0",
+  "description": "Next-Token Prediction Simulator - An interactive tool to learn how language models predict text",
+  "type": "module",
+  "dependencies": {
+    "openai": "^4.73.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
