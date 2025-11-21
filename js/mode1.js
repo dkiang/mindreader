@@ -56,8 +56,10 @@ export async function startGame() {
   ui.updateScore(gameState.score, gameState.maxRounds);
   ui.updateRound(gameState.currentRound, gameState.maxRounds);
 
-  // Start first round
-  await playRound();
+  // Show introduction modal, then start first round when dismissed
+  ui.showMode1Introduction(async () => {
+    await playRound();
+  });
 }
 
 /**

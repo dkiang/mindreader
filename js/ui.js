@@ -50,6 +50,11 @@ export function initUI() {
   elements.endResults = document.getElementById('end-results');
   elements.playAgainBtn = document.getElementById('play-again-btn');
 
+  elements.introModal = document.getElementById('intro-modal');
+  elements.introTitle = document.getElementById('intro-title');
+  elements.introText = document.getElementById('intro-text');
+  elements.dismissIntroBtn = document.getElementById('dismiss-intro-btn');
+
   elements.loadingOverlay = document.getElementById('loading-overlay');
 }
 
@@ -318,6 +323,34 @@ export function showEndScreen(results) {
 
 export function hideEndScreen() {
   hide(elements.endScreen);
+}
+
+/**
+ * Show introduction modal for Mode 1
+ */
+export function showMode1Introduction(onDismiss) {
+  elements.introTitle.textContent = 'Welcome to Mode 1';
+  elements.introText.innerHTML = `
+    <p>In this mode, you'll see the beginning of a paragraph that's being generated live by an AI. At each step, the AI knows the most statistically likely next word—and your job is to guess which one it will choose.</p>
+    <p>You're trying to think like the model: predictable, literal, and probability-driven. See how often you match it.</p>
+  `;
+
+  // Set up dismiss button handler
+  elements.dismissIntroBtn.onclick = () => {
+    hideIntroModal();
+    if (onDismiss) {
+      onDismiss();
+    }
+  };
+
+  show(elements.introModal);
+}
+
+/**
+ * Hide introduction modal
+ */
+export function hideIntroModal() {
+  hide(elements.introModal);
 }
 
 /**

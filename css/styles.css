@@ -609,6 +609,57 @@ body {
 }
 
 /* ===========================
+   Introduction Modal
+   =========================== */
+.intro-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.85);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1001;
+    padding: var(--spacing-md);
+}
+
+.intro-modal-content {
+    background: white;
+    padding: var(--spacing-xl);
+    border-radius: var(--border-radius);
+    max-width: 550px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+}
+
+.intro-modal-content h2 {
+    margin-bottom: var(--spacing-lg);
+    color: var(--primary-color);
+    font-size: var(--font-size-xxl);
+    text-align: center;
+}
+
+#intro-text {
+    margin-bottom: var(--spacing-xl);
+    line-height: 1.8;
+    font-size: 1.1rem;
+    color: var(--text-color);
+}
+
+#intro-text p {
+    margin-bottom: var(--spacing-md);
+}
+
+#dismiss-intro-btn {
+    display: block;
+    margin: 0 auto;
+}
+
+/* ===========================
    Loading Overlay
    =========================== */
 .loading-overlay {
