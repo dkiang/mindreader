@@ -26,6 +26,7 @@ export function initUI() {
   elements.tokenButtons = document.getElementById('token-buttons');
   elements.nudgeInput = document.getElementById('nudge-input');
   elements.submitNudgeBtn = document.getElementById('submit-nudge-btn');
+  elements.giveUpBtn = document.getElementById('give-up-btn');
 
   elements.feedbackArea = document.getElementById('feedback-area');
   elements.probabilityDisplay = document.getElementById('probability-display');

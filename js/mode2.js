@@ -44,6 +44,9 @@ function setupEventListeners() {
       handleNudgeSubmit();
     }
   });
+
+  // Give up button
+  elements.giveUpBtn.addEventListener('click', handleGiveUp);
 }
 
 /**
@@ -186,6 +189,17 @@ async function handleNudgeSubmit() {
       gameState.currentTurn--;
       ui.updateTurn(gameState.currentTurn, gameState.maxTurns);
     }
+  }
+}
+
+/**
+ * Handle give up button click
+ */
+function handleGiveUp() {
+  if (!gameState.isActive) return;
+
+  if (confirm('Are you sure you want to end the game and see results?')) {
+    endGame();
   }
 }
 

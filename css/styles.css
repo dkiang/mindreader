@@ -360,6 +360,30 @@ body {
     cursor: not-allowed;
 }
 
+.secondary-btn {
+    background: #6c757d;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    font-size: var(--font-size-md);
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.secondary-btn:hover:not(:disabled) {
+    background: #5a6268;
+}
+
+.secondary-btn:active:not(:disabled) {
+    background: #545b62;
+}
+
+.secondary-btn:disabled {
+    background: var(--disabled-color);
+    cursor: not-allowed;
+}
+
 .large-btn {
     padding: 16px 32px;
     font-size: var(--font-size-lg);
