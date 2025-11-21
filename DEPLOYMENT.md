@@ -77,10 +77,16 @@ git push -u origin main
 
 ### Troubleshooting
 
+**If you see "references Secret which does not exist":**
+- This is already fixed in the latest `vercel.json` (no `env` section needed)
+- Environment variables added through the dashboard are automatically available
+- Redeploy after pushing the updated `vercel.json`
+
 **If you see "Server configuration error":**
 - Check that `OPENAI_API_KEY` environment variable is set in Vercel
 - Make sure the key starts with `sk-` and is complete
 - Redeploy after adding the environment variable
+- Verify it's added to all environments (Production, Preview, Development)
 
 **If you see "API Error":**
 - Verify your OpenAI API key is valid
