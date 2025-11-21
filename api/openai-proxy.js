@@ -80,6 +80,30 @@ ${prompt}
       });
     }
 
+    // -----------------------------
+    // CONTINUATION — Complete sentence
+    // -----------------------------
+    if (mode === "continuation") {
+      const maxTokens = req.body.maxTokens || 30;
+
+      const response = await client.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: [{
+          role: "user",
+          content: `Continue this text naturally: "${prompt}"`
+        }],
+        max_tokens: maxTokens,
+        temperature: 0.7
+      });
+
+      const continuation = response.choices[0].message.content.trim();
+
+      return res.status(200).json({
+        type: "continuation",
+        continuation
+      });
+    }
+
     return res.status(400).json({ error: "Invalid mode." });
 
   } catch (err) {

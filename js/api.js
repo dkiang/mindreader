@@ -42,5 +42,27 @@ export const MindreaderAPI = {
     }
 
     return await response.json();
+  },
+
+  //------------------------------------
+  // Generate continuation (for Mode 1 end screen)
+  //------------------------------------
+  async generateContinuation(promptText, maxTokens = 30) {
+    const response = await fetch(API_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        mode: "continuation",
+        prompt: promptText,
+        maxTokens: maxTokens
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error("Continuation request failed");
+    }
+
+    const data = await response.json();
+    return data.continuation || "";
   }
 };

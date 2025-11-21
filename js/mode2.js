@@ -4,7 +4,7 @@
  */
 
 import { CONFIG, getRandomPrompt, getRandomItem, countWords } from './config.js';
-import { estimateTargetProbability } from './api.js';
+import { MindreaderAPI } from './api.js';
 import * as ui from './ui.js';
 
 // Game state
@@ -196,16 +196,16 @@ async function updateProbability() {
     gameState.previousProbability = gameState.currentProbability;
 
     // Get new probability estimate
-    const probability = await estimateTargetProbability(
+    const result = await MindreaderAPI.getTargetProbability(
       gameState.currentContext,
       gameState.hiddenTarget
     );
 
-    gameState.currentProbability = probability;
-    gameState.probabilityHistory.push(probability);
+    gameState.currentProbability = result.probability;
+    gameState.probabilityHistory.push(result.probability);
 
     // Update meter
-    ui.updateProbabilityMeter(probability);
+    ui.updateProbabilityMeter(result.probability);
 
     ui.hideLoading();
   } catch (error) {

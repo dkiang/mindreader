@@ -4,7 +4,7 @@
  */
 
 import { CONFIG, getRandomPrompt } from './config.js';
-import { getNextTokenDistribution, generateContinuation } from './api.js';
+import { MindreaderAPI } from './api.js';
 import * as ui from './ui.js';
 
 // Game state
@@ -61,6 +61,54 @@ export async function startGame() {
 }
 
 /**
+ * Process API response into the format expected by the game logic
+ */
+function processTokenDistribution(apiResult) {
+  const { topToken, tokenDistribution } = apiResult;
+
+  // Convert API format to game format
+  // API returns: [{token, logprob, bytes}, ...]
+  // Game expects: [{token, originalToken, logprob, probability, rank, isChosen}, ...]
+
+  const processedDistribution = tokenDistribution.map((item, index) => ({
+    token: item.token.trim(),
+    originalToken: item.token, // Keep original with spacing
+    logprob: item.logprob,
+    probability: Math.exp(item.logprob),
+    rank: index + 1,
+    isChosen: item.token === topToken
+  }));
+
+  // Deduplicate tokens (keep first occurrence)
+  const seenTokens = new Map();
+  const deduplicatedDistribution = [];
+
+  for (const item of processedDistribution) {
+    const normalizedToken = item.token.toLowerCase();
+
+    // Skip empty tokens
+    if (!normalizedToken) continue;
+
+    // If we haven't seen this token, keep it
+    if (!seenTokens.has(normalizedToken)) {
+      seenTokens.set(normalizedToken, true);
+      deduplicatedDistribution.push(item);
+    }
+  }
+
+  // Re-assign ranks after deduplication
+  deduplicatedDistribution.forEach((item, index) => {
+    item.rank = index + 1;
+  });
+
+  return {
+    chosenToken: topToken.trim(),
+    chosenOriginalToken: topToken,
+    distribution: deduplicatedDistribution
+  };
+}
+
+/**
  * Play a single round
  */
 async function playRound() {
@@ -68,10 +116,10 @@ async function playRound() {
     ui.showLoading();
 
     // Get token distribution from API
-    const result = await getNextTokenDistribution(
-      gameState.fullText,
-      CONFIG.mode1.logprobCount
-    );
+    const apiResult = await MindreaderAPI.getNextTokenDistribution(gameState.fullText);
+
+    // Process the raw API response into the format we need
+    const result = processTokenDistribution(apiResult);
 
     gameState.tokenDistribution = result.distribution;
 
@@ -422,7 +470,7 @@ async function endGame() {
 
   try {
     // Complete the sentence with additional tokens
-    const completion = await generateContinuation(gameState.fullText, 30);
+    const completion = await MindreaderAPI.generateContinuation(gameState.fullText, 30);
 
     ui.hideLoading();
 
