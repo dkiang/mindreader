@@ -347,6 +347,27 @@ export function showMode1Introduction(onDismiss) {
 }
 
 /**
+ * Show introduction modal for Mode 2
+ */
+export function showMode2Introduction(onDismiss) {
+  elements.introTitle.textContent = 'Welcome to Mode 2';
+  elements.introText.innerHTML = `
+    <p>Here, an AI will generate a paragraph silently in the background. A hidden target concept has already been chosen. Your job is to influence the story by adding short "nudges" to the text and watching how they affect the probability meter.</p>
+    <p>Use minimal hints to try to push the narrative toward the target—even though you don't know what it is at first.</p>
+  `;
+
+  // Set up dismiss button handler
+  elements.dismissIntroBtn.onclick = () => {
+    hideIntroModal();
+    if (onDismiss) {
+      onDismiss();
+    }
+  };
+
+  show(elements.introModal);
+}
+
+/**
  * Hide introduction modal
  */
 export function hideIntroModal() {

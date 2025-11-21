@@ -87,7 +87,11 @@ export async function startGame() {
   elements.nudgeInput.disabled = false;
   elements.submitNudgeBtn.disabled = false;
   elements.nudgeInput.value = '';
-  elements.nudgeInput.focus();
+
+  // Show introduction modal, then focus input when dismissed
+  ui.showMode2Introduction(() => {
+    elements.nudgeInput.focus();
+  });
 
   // Don't calculate initial probability - start at 0%
   // Probability will be calculated after the first nudge
