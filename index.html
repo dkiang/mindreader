@@ -5,6 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="MINDREADER - Learn how AI predicts next tokens through interactive games">
     <title>MINDREADER - Next-Token Prediction Simulator</title>
+    <script>
+      // Ensure proper base path for subdirectory deployment
+      const currentPath = window.location.pathname;
+      if (currentPath.endsWith('mindreader') && !currentPath.endsWith('/')) {
+        // Redirect to trailing slash version
+        window.location.href = window.location.href + '/';
+      }
+    </script>
     <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
