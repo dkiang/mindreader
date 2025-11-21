@@ -5,6 +5,14 @@
 import { CONFIG } from './config.js';
 
 /**
+ * Get the correct API path for the current deployment context
+ */
+function getApiPath() {
+  // Use relative path so it works in subdirectories
+  return 'api/chat';
+}
+
+/**
  * Make a request to our Vercel serverless function (which proxies to OpenAI)
  */
 async function makeOpenAIRequest(messages, options = {}) {
@@ -23,7 +31,7 @@ async function makeOpenAIRequest(messages, options = {}) {
   }
 
   // Call our serverless function instead of OpenAI directly
-  const response = await fetch('/api/chat', {
+  const response = await fetch(getApiPath(), {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json'
