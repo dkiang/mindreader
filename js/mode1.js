@@ -193,7 +193,8 @@ function isValidWord(token) {
   // Reject common suffix-only fragments (incomplete words)
   const suffixOnlyPatterns = [
     /^(ing|ed|tion|sion|ness|ment|ity|ly|er|est|ful|less|able|ible|ous|ious|ive|al|ial|ent|ant|ence|ance|ure|ture)$/i,
-    /^(es|nt|unt|ist|ism|ship|dom|hood)$/i
+    /^(es|nt|unt|ist|ism|ship|dom|hood|oles|ules|ates|ites|ness)$/i,
+    /^(ling|ment|ward|wise|like)$/i
   ];
 
   for (const pattern of suffixOnlyPatterns) {
@@ -205,7 +206,7 @@ function isValidWord(token) {
   // Reject common prefix-only fragments (incomplete words)
   const prefixOnlyPatterns = [
     /^(un|re|pre|dis|mis|non|over|under|sub|inter|fore|anti|semi|mid|mini|micro|mega|super)$/i,
-    /^(gro|hes|whe|tha|thi|whi|sho|cou|wou|mus|nee)$/i  // Common fragments
+    /^(gro|hes|whe|tha|thi|whi|sho|cou|wou|mus|nee|looph|frag|seg)$/i  // Common fragments
   ];
 
   for (const pattern of prefixOnlyPatterns) {
@@ -218,6 +219,20 @@ function isValidWord(token) {
   // Reject tokens with no vowels (likely fragments)
   if (trimmed.length >= 4 && !/[aeiouAEIOU]/.test(trimmed)) {
     return false;
+  }
+
+  // Reject words that end with unusual consonant clusters (likely fragments)
+  if (/ph$|oph$|mph$/.test(trimmed) && trimmed.length < 6) {
+    return false;
+  }
+
+  // Reject tokens ending in "oles" or "ules" (usually fragments like "loopholes" -> "oles")
+  if (/^[a-z]{2,4}(oles|ules|ates|ites)$/i.test(trimmed)) {
+    // Allow common exceptions
+    const exceptions = ['roles', 'holes', 'poles', 'moles', 'rules', 'gates', 'dates', 'rates', 'sites', 'bites', 'kites'];
+    if (!exceptions.includes(trimmed)) {
+      return false;
+    }
   }
 
   // Words 4+ letters are considered valid if they pass all the checks above
