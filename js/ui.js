@@ -50,6 +50,11 @@ export function initUI() {
   elements.endTitle = document.getElementById('end-title');
   elements.endResults = document.getElementById('end-results');
   elements.playAgainBtn = document.getElementById('play-again-btn');
+  elements.seeSummaryBtn = document.getElementById('see-summary-btn');
+
+  elements.summaryModal = document.getElementById('summary-modal');
+  elements.summaryContent = document.getElementById('summary-content');
+  elements.closeSummaryBtn = document.getElementById('close-summary-btn');
 
   elements.introModal = document.getElementById('intro-modal');
   elements.introTitle = document.getElementById('intro-title');
@@ -315,15 +320,62 @@ export function updateTurn(current, max) {
 /**
  * Show end screen
  * @param {Object} results - Results object with title and content
+ * @param {boolean} showSummaryButton - Whether to show the "See Summary" button (Mode 2 only)
  */
-export function showEndScreen(results) {
+export function showEndScreen(results, showSummaryButton = false) {
   elements.endTitle.textContent = results.title || 'Game Complete!';
   elements.endResults.innerHTML = results.content || '';
+
+  // Show/hide the "See Summary" button based on mode
+  if (showSummaryButton) {
+    show(elements.seeSummaryBtn);
+  } else {
+    hide(elements.seeSummaryBtn);
+  }
+
+  // Add click-outside-to-dismiss
+  setTimeout(() => {
+    elements.endScreen.onclick = (e) => {
+      if (e.target === elements.endScreen) {
+        hideEndScreen();
+      }
+    };
+  }, 100);
+
   show(elements.endScreen);
 }
 
 export function hideEndScreen() {
   hide(elements.endScreen);
+  if (elements.endScreen) {
+    elements.endScreen.onclick = null;
+  }
+}
+
+/**
+ * Show summary modal
+ * @param {string} summaryHTML - HTML content for the summary
+ */
+export function showSummaryModal(summaryHTML) {
+  elements.summaryContent.innerHTML = summaryHTML;
+
+  // Add click-outside-to-dismiss
+  setTimeout(() => {
+    elements.summaryModal.onclick = (e) => {
+      if (e.target === elements.summaryModal) {
+        hideSummaryModal();
+      }
+    };
+  }, 100);
+
+  show(elements.summaryModal);
+}
+
+export function hideSummaryModal() {
+  hide(elements.summaryModal);
+  if (elements.summaryModal) {
+    elements.summaryModal.onclick = null;
+  }
 }
 
 /**
@@ -443,7 +495,7 @@ export function createMode1EndScreen(score, total, startingPrompt, gameText, com
 }
 
 /**
- * Create end screen content for Mode 2
+ * Create end screen content for Mode 2 (without journey summary)
  */
 export function createMode2EndScreen(target, success, turns, finalProbability) {
   const resultMessage = success

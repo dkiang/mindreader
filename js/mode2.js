@@ -18,7 +18,8 @@ let gameState = {
   previousProbability: 0,
   probabilityHistory: [],
   nudgeHistory: [],
-  hasWon: false
+  hasWon: false,
+  journeySummaryHTML: ''
 };
 
 /**
@@ -47,6 +48,18 @@ function setupEventListeners() {
 
   // Give up button
   elements.giveUpBtn.addEventListener('click', handleGiveUp);
+
+  // See summary button
+  elements.seeSummaryBtn.addEventListener('click', () => {
+    if (gameState.journeySummaryHTML) {
+      ui.showSummaryModal(gameState.journeySummaryHTML);
+    }
+  });
+
+  // Close summary button
+  elements.closeSummaryBtn.addEventListener('click', () => {
+    ui.hideSummaryModal();
+  });
 }
 
 /**
@@ -64,7 +77,8 @@ export async function startGame() {
     previousProbability: 0,
     probabilityHistory: [],
     nudgeHistory: [],
-    hasWon: false
+    hasWon: false,
+    journeySummaryHTML: ''
   };
 
   console.log('Hidden target:', gameState.hiddenTarget); // For debugging
@@ -297,15 +311,13 @@ function endGame() {
     gameState.currentProbability
   );
 
-  // Add journey summary to results
-  const journeySummary = ui.createJourneySummary(
+  // Create journey summary for the summary modal
+  let journeySummary = ui.createJourneySummary(
     gameState.probabilityHistory,
     gameState.nudgeHistory
   );
 
-  results.content = journeySummary + results.content;
-
-  // Add nudge history to results
+  // Add nudge history to journey summary
   if (gameState.nudgeHistory.length > 0) {
     const nudgeListHTML = gameState.nudgeHistory
       .map((nudge, index) => {
@@ -314,7 +326,7 @@ function endGame() {
       })
       .join('');
 
-    results.content += `
+    journeySummary += `
       <div class="end-results-section">
         <h3>Your Nudges</h3>
         <ul style="text-align: left; padding-left: 20px;">
@@ -324,7 +336,11 @@ function endGame() {
     `;
   }
 
-  ui.showEndScreen(results);
+  // Store journey summary for later viewing
+  gameState.journeySummaryHTML = journeySummary;
+
+  // Show end screen with summary button enabled for Mode 2
+  ui.showEndScreen(results, true);
 }
 
 /**
@@ -341,13 +357,15 @@ export function reset() {
     previousProbability: 0,
     probabilityHistory: [],
     nudgeHistory: [],
-    hasWon: false
+    hasWon: false,
+    journeySummaryHTML: ''
   };
 
   ui.clearGameUI();
   ui.show('startControls');
   ui.hide('mode2Controls');
   ui.hideProbabilityMeter();
+  ui.hideSummaryModal();
 
   const elements = ui.getElements();
   elements.nudgeInput.value = '';
