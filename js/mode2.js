@@ -75,15 +75,18 @@ export async function startGame() {
   ui.show('mode2Controls');
   ui.showProbabilityMeter();
 
+  // Initialize visualizations
+  ui.initMode2Visualizations(gameState.maxTurns);
+
   // Set initial text
   ui.setCurrentText(gameState.currentContext);
 
   // Update turn display
   ui.updateTurn(gameState.currentTurn, gameState.maxTurns);
 
-  // Set initial probability meter to 0%
-  ui.updateProbabilityMeter(0);
+  // Set initial probability to 0%
   gameState.probabilityHistory.push(0);
+  ui.updateTrajectorySparkline(gameState.probabilityHistory);
 
   // Enable nudge input
   const elements = ui.getElements();
@@ -222,8 +225,8 @@ async function updateProbability() {
     gameState.currentProbability = probability;
     gameState.probabilityHistory.push(probability);
 
-    // Update meter
-    ui.updateProbabilityMeter(probability);
+    // Update visualizations
+    ui.updateTrajectorySparkline(gameState.probabilityHistory);
 
     ui.hideLoading();
   } catch (error) {
@@ -239,6 +242,12 @@ function provideFeedback() {
   const change = gameState.currentProbability - gameState.previousProbability;
   const feedback = CONFIG.mode2.feedback;
   const elements = ui.getElements();
+
+  // Add path segment with visual feedback
+  ui.addPathSegment(gameState.currentTurn, gameState.currentProbability, change);
+
+  // Update visual feedback indicator
+  ui.updateVisualFeedback(change, gameState.currentProbability);
 
   let message = '';
   let type = 'neutral';
@@ -287,6 +296,14 @@ function endGame() {
     gameState.currentTurn,
     gameState.currentProbability
   );
+
+  // Add journey summary to results
+  const journeySummary = ui.createJourneySummary(
+    gameState.probabilityHistory,
+    gameState.nudgeHistory
+  );
+
+  results.content = journeySummary + results.content;
 
   // Add nudge history to results
   if (gameState.nudgeHistory.length > 0) {

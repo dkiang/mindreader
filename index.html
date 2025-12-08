@@ -97,13 +97,38 @@
                     </table>
                 </div>
 
-                <!-- Mode 2: Probability Meter -->
+                <!-- Mode 2: Visual Feedback System -->
                 <div id="probability-meter-container" class="probability-meter-container hidden">
                     <h3>Target Probability</h3>
-                    <div class="probability-meter">
-                        <div id="probability-meter-fill" class="probability-meter-fill" style="width: 0%;">
-                            <span id="probability-meter-text" class="probability-meter-text">0%</span>
+
+                    <!-- Trajectory Sparkline Chart -->
+                    <div id="trajectory-sparkline" class="trajectory-sparkline" role="img" aria-label="Probability trajectory chart">
+                        <svg id="trajectory-svg" class="trajectory-svg" viewBox="0 0 600 100" preserveAspectRatio="xMidYMid meet">
+                            <!-- Target line at 100% -->
+                            <line class="target-line" x1="0" y1="10" x2="600" y2="10" stroke-dasharray="4,4" />
+                            <!-- Path will be dynamically generated -->
+                            <path id="trajectory-path" class="trajectory-path" d="" fill="none" />
+                            <!-- Area under the curve -->
+                            <path id="trajectory-area" class="trajectory-area" d="" />
+                            <!-- Data points -->
+                            <g id="trajectory-points"></g>
+                        </svg>
+                    </div>
+
+                    <!-- Color-Coded Path Segments -->
+                    <div id="path-container" class="path-container">
+                        <div id="path-segments" class="path-segments">
+                            <!-- Segments will be dynamically generated -->
                         </div>
+                        <div id="remaining-turns" class="remaining-turns">
+                            <!-- Remaining turn indicators will be dynamically generated -->
+                        </div>
+                    </div>
+
+                    <!-- Current Probability and Feedback Indicator -->
+                    <div id="probability-status" class="probability-status">
+                        <span id="probability-current-text" class="probability-current-text">Current: 0%</span>
+                        <span id="feedback-indicator" class="feedback-indicator" role="status" aria-live="polite"></span>
                     </div>
                 </div>
 

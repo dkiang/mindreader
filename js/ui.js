@@ -510,3 +510,285 @@ export function showError(message, onDismiss = null) {
 export function showSuccess(message, onDismiss = null) {
   showFeedback(message, 'success', true, onDismiss);
 }
+
+/**
+ * Mode 2 Visual Feedback System Functions
+ */
+
+/**
+ * Get probability color based on value
+ */
+function getProbabilityColor(probability) {
+  if (probability >= 81) return '#4CAF50';
+  if (probability >= 61) return '#8BC34A';
+  if (probability >= 41) return '#FFC107';
+  if (probability >= 21) return '#FF9800';
+  return '#E53935';
+}
+
+/**
+ * Get probability range for path segment
+ */
+function getProbabilityRange(probability) {
+  if (probability >= 81) return '81-100';
+  if (probability >= 61) return '61-80';
+  if (probability >= 41) return '41-60';
+  if (probability >= 21) return '21-40';
+  return '0-20';
+}
+
+/**
+ * Initialize Mode 2 visualizations
+ */
+export function initMode2Visualizations(maxTurns) {
+  // Clear previous visualizations
+  const pathSegments = document.getElementById('path-segments');
+  const remainingTurns = document.getElementById('remaining-turns');
+  const trajectoryPoints = document.getElementById('trajectory-points');
+  const trajectoryPath = document.getElementById('trajectory-path');
+  const trajectoryArea = document.getElementById('trajectory-area');
+
+  if (pathSegments) pathSegments.innerHTML = '';
+  if (remainingTurns) remainingTurns.innerHTML = '';
+  if (trajectoryPoints) trajectoryPoints.innerHTML = '';
+  if (trajectoryPath) trajectoryPath.setAttribute('d', '');
+  if (trajectoryArea) trajectoryArea.setAttribute('d', '');
+
+  // Create remaining turn dots
+  if (remainingTurns) {
+    for (let i = 0; i < maxTurns; i++) {
+      const dot = document.createElement('div');
+      dot.className = 'remaining-turn-dot';
+      dot.dataset.turn = i + 1;
+      remainingTurns.appendChild(dot);
+    }
+  }
+
+  // Reset probability status
+  const probabilityCurrentText = document.getElementById('probability-current-text');
+  const feedbackIndicator = document.getElementById('feedback-indicator');
+  if (probabilityCurrentText) probabilityCurrentText.textContent = 'Current: 0%';
+  if (feedbackIndicator) feedbackIndicator.textContent = '';
+}
+
+/**
+ * Update trajectory sparkline chart
+ */
+export function updateTrajectorySparkline(probabilityHistory) {
+  const trajectoryPath = document.getElementById('trajectory-path');
+  const trajectoryArea = document.getElementById('trajectory-area');
+  const trajectoryPoints = document.getElementById('trajectory-points');
+
+  if (!trajectoryPath || !trajectoryArea || !trajectoryPoints) return;
+
+  const width = 600;
+  const height = 100;
+  const padding = 5;
+  const maxTurns = 10;
+
+  // Calculate positions
+  const points = probabilityHistory.map((prob, index) => {
+    const x = padding + (index / Math.max(probabilityHistory.length - 1, 1)) * (width - 2 * padding);
+    const y = height - padding - ((prob / 100) * (height - 2 * padding));
+    return { x, y, prob };
+  });
+
+  if (points.length === 0) return;
+
+  // Build path data
+  let pathData = `M ${points[0].x} ${points[0].y}`;
+  for (let i = 1; i < points.length; i++) {
+    pathData += ` L ${points[i].x} ${points[i].y}`;
+  }
+
+  // Build area data
+  let areaData = `M ${points[0].x} ${height - padding}`;
+  areaData += ` L ${points[0].x} ${points[0].y}`;
+  for (let i = 1; i < points.length; i++) {
+    areaData += ` L ${points[i].x} ${points[i].y}`;
+  }
+  areaData += ` L ${points[points.length - 1].x} ${height - padding}`;
+  areaData += ' Z';
+
+  // Set path attributes
+  const currentColor = getProbabilityColor(points[points.length - 1].prob);
+  trajectoryPath.setAttribute('d', pathData);
+  trajectoryPath.setAttribute('stroke', currentColor);
+  trajectoryArea.setAttribute('d', areaData);
+  trajectoryArea.setAttribute('fill', currentColor);
+
+  // Update points
+  trajectoryPoints.innerHTML = '';
+  points.forEach((point, index) => {
+    const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+    circle.setAttribute('class', 'trajectory-point');
+    circle.setAttribute('cx', point.x);
+    circle.setAttribute('cy', point.y);
+    circle.setAttribute('r', 4);
+    circle.setAttribute('fill', getProbabilityColor(point.prob));
+
+    // Add tooltip
+    const title = document.createElementNS('http://www.w3.org/2000/svg', 'title');
+    title.textContent = `Turn ${index}: ${Math.round(point.prob)}%`;
+    circle.appendChild(title);
+
+    trajectoryPoints.appendChild(circle);
+  });
+}
+
+/**
+ * Add a path segment for a turn
+ */
+export function addPathSegment(turnNumber, probability, change) {
+  const pathSegments = document.getElementById('path-segments');
+  const remainingTurns = document.getElementById('remaining-turns');
+
+  if (!pathSegments) return;
+
+  // Create segment
+  const segment = document.createElement('div');
+  segment.className = 'path-segment';
+  segment.dataset.turn = turnNumber;
+  segment.dataset.range = getProbabilityRange(probability);
+  segment.textContent = `${Math.round(probability)}%`;
+  segment.setAttribute('title', `Turn ${turnNumber}: ${Math.round(probability)}%`);
+
+  // Add animation based on change
+  if (change >= 15) {
+    segment.classList.add('glow');
+  } else if (change <= -15) {
+    segment.classList.add('shake');
+  }
+
+  pathSegments.appendChild(segment);
+
+  // Remove one remaining turn dot
+  if (remainingTurns) {
+    const dots = remainingTurns.querySelectorAll('.remaining-turn-dot');
+    if (dots.length > 0) {
+      dots[0].remove();
+    }
+  }
+}
+
+/**
+ * Update visual feedback indicator
+ */
+export function updateVisualFeedback(change, currentProbability) {
+  const feedbackIndicator = document.getElementById('feedback-indicator');
+  const probabilityCurrentText = document.getElementById('probability-current-text');
+
+  if (!feedbackIndicator) return;
+
+  // Update current probability text
+  if (probabilityCurrentText) {
+    probabilityCurrentText.textContent = `Current: ${Math.round(currentProbability)}%`;
+  }
+
+  // Clear previous feedback
+  feedbackIndicator.className = 'feedback-indicator';
+
+  // Determine feedback type and icon
+  let icon = '';
+  let text = '';
+  let feedbackClass = '';
+
+  if (change >= 15) {
+    icon = '↑↑';
+    text = `+${Math.round(change)}%`;
+    feedbackClass = 'strong-increase';
+    feedbackIndicator.setAttribute('aria-label', `Strong increase: ${Math.round(change)} percentage points`);
+  } else if (change >= 5) {
+    icon = '↑';
+    text = `+${Math.round(change)}%`;
+    feedbackClass = 'small-increase';
+    feedbackIndicator.setAttribute('aria-label', `Small increase: ${Math.round(change)} percentage points`);
+  } else if (change <= -15) {
+    icon = '↓↓';
+    text = `${Math.round(change)}%`;
+    feedbackClass = 'strong-decrease';
+    feedbackIndicator.setAttribute('aria-label', `Strong decrease: ${Math.round(change)} percentage points`);
+  } else if (change <= -5) {
+    icon = '↓';
+    text = `${Math.round(change)}%`;
+    feedbackClass = 'small-decrease';
+    feedbackIndicator.setAttribute('aria-label', `Small decrease: ${Math.round(change)} percentage points`);
+  } else {
+    icon = '→';
+    text = `${Math.round(change)}%`;
+    feedbackClass = 'neutral';
+    feedbackIndicator.setAttribute('aria-label', `Minimal change: ${Math.round(change)} percentage points`);
+  }
+
+  feedbackIndicator.textContent = `${icon} ${text}`;
+  feedbackIndicator.className = `feedback-indicator ${feedbackClass} fade-out`;
+}
+
+/**
+ * Create journey summary for end screen
+ */
+export function createJourneySummary(probabilityHistory, nudgeHistory) {
+  if (probabilityHistory.length === 0) return '';
+
+  const startingProb = probabilityHistory[0];
+  const finalProb = probabilityHistory[probabilityHistory.length - 1];
+  const peakProb = Math.max(...probabilityHistory);
+
+  // Find biggest jump
+  let biggestJump = 0;
+  let biggestJumpTurn = 0;
+  for (let i = 1; i < probabilityHistory.length; i++) {
+    const change = probabilityHistory[i] - probabilityHistory[i - 1];
+    if (Math.abs(change) > Math.abs(biggestJump)) {
+      biggestJump = change;
+      biggestJumpTurn = i;
+    }
+  }
+
+  // Count increases vs decreases
+  let increases = 0;
+  let decreases = 0;
+  for (let i = 1; i < probabilityHistory.length; i++) {
+    const change = probabilityHistory[i] - probabilityHistory[i - 1];
+    if (change > 0) increases++;
+    else if (change < 0) decreases++;
+  }
+
+  return `
+    <div class="journey-summary">
+      <h4>Journey Summary</h4>
+      <div class="journey-stats">
+        <div class="journey-stat">
+          <div class="journey-stat-value">${Math.round(startingProb)}%</div>
+          <div class="journey-stat-label">Starting</div>
+        </div>
+        <div class="journey-stat">
+          <div class="journey-stat-value">${Math.round(peakProb)}%</div>
+          <div class="journey-stat-label">Peak</div>
+        </div>
+        <div class="journey-stat">
+          <div class="journey-stat-value">${Math.round(finalProb)}%</div>
+          <div class="journey-stat-label">Final</div>
+        </div>
+        <div class="journey-stat">
+          <div class="journey-stat-value">${biggestJump > 0 ? '+' : ''}${Math.round(biggestJump)}%</div>
+          <div class="journey-stat-label">Biggest Jump (Turn ${biggestJumpTurn})</div>
+        </div>
+        <div class="journey-stat">
+          <div class="journey-stat-value">${increases} / ${decreases}</div>
+          <div class="journey-stat-label">Increases / Decreases</div>
+        </div>
+      </div>
+      <div class="journey-path-display">
+        <h4>Your Path</h4>
+        <div class="path-segments">
+          ${probabilityHistory.slice(1).map((prob, index) => `
+            <div class="path-segment" data-range="${getProbabilityRange(prob)}" title="Turn ${index + 1}: ${Math.round(prob)}%">
+              ${Math.round(prob)}%
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    </div>
+  `;
+}

@@ -450,7 +450,7 @@ body {
     border-bottom: none;
 }
 
-/* Probability Meter (Mode 2) */
+/* Probability Meter (Mode 2) - Visual Feedback System */
 .probability-meter-container {
     background: var(--text-bg);
     padding: var(--spacing-md);
@@ -463,32 +463,292 @@ body {
     color: var(--text-color);
 }
 
-.probability-meter {
+/* Trajectory Sparkline Chart */
+.trajectory-sparkline {
     width: 100%;
-    height: 40px;
-    background: var(--border-color);
+    height: 120px;
+    margin-bottom: var(--spacing-md);
+    background: white;
     border-radius: var(--border-radius-sm);
-    overflow: hidden;
-    position: relative;
+    padding: var(--spacing-sm);
+    border: 1px solid var(--border-color);
 }
 
-.probability-meter-fill {
+.trajectory-svg {
+    width: 100%;
     height: 100%;
-    background: var(--primary-color);
-    transition: width var(--transition-medium);
+    display: block;
+}
+
+.target-line {
+    stroke: #999;
+    stroke-width: 1;
+    opacity: 0.5;
+}
+
+.trajectory-path {
+    stroke-width: 3;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    transition: stroke var(--transition-medium);
+}
+
+.trajectory-area {
+    opacity: 0.1;
+    transition: fill var(--transition-medium);
+}
+
+.trajectory-point {
+    r: 4;
+    stroke: white;
+    stroke-width: 2;
+    transition: all var(--transition-fast);
+}
+
+.trajectory-point:hover {
+    r: 6;
+}
+
+/* Color-Coded Path Segments */
+.path-container {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-md);
+    flex-wrap: wrap;
+}
+
+.path-segments {
+    display: flex;
+    gap: var(--spacing-xs);
+    flex: 1;
+    min-width: 0;
+    flex-wrap: wrap;
+}
+
+.path-segment {
+    height: 50px;
+    min-width: 50px;
+    flex: 1;
+    border-radius: var(--border-radius-sm);
     display: flex;
     align-items: center;
     justify-content: center;
-    min-width: 50px;
+    font-weight: 700;
+    font-size: var(--font-size-sm);
+    color: white;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    position: relative;
+    cursor: pointer;
+    transition: all var(--transition-medium);
+    animation: segmentAppear var(--transition-medium) ease-out;
 }
 
-.probability-meter-text {
-    color: white;
-    font-weight: 700;
-    font-size: var(--font-size-base);
+@keyframes segmentAppear {
+    from {
+        opacity: 0;
+        transform: scale(0.8);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.path-segment:hover {
+    transform: scale(1.05);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.path-segment.glow {
+    animation: glowPulse 1s ease-out;
+}
+
+@keyframes glowPulse {
+    0%, 100% {
+        box-shadow: 0 0 0 rgba(76, 175, 80, 0);
+    }
+    50% {
+        box-shadow: 0 0 20px rgba(76, 175, 80, 0.6);
+    }
+}
+
+.path-segment.shake {
+    animation: shake 0.5s ease-out;
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    75% { transform: translateX(5px); }
+}
+
+/* Color scale based on probability ranges */
+.path-segment[data-range="0-20"] {
+    background: linear-gradient(135deg, #E53935, #C62828);
+}
+
+.path-segment[data-range="21-40"] {
+    background: linear-gradient(135deg, #FF9800, #F57C00);
+}
+
+.path-segment[data-range="41-60"] {
+    background: linear-gradient(135deg, #FFC107, #FFA000);
+}
+
+.path-segment[data-range="61-80"] {
+    background: linear-gradient(135deg, #8BC34A, #7CB342);
+}
+
+.path-segment[data-range="81-100"] {
+    background: linear-gradient(135deg, #4CAF50, #388E3C);
+}
+
+.path-segment-label {
     position: absolute;
+    bottom: -20px;
     left: 50%;
     transform: translateX(-50%);
+    font-size: 0.75rem;
+    color: var(--text-color);
+    white-space: nowrap;
+}
+
+/* Remaining Turns Indicator */
+.remaining-turns {
+    display: flex;
+    gap: var(--spacing-xs);
+    align-items: center;
+}
+
+.remaining-turn-dot {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--border-color);
+    border: 2px solid #999;
+    transition: all var(--transition-fast);
+}
+
+/* Probability Status and Feedback Indicator */
+.probability-status {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-md);
+    padding: var(--spacing-sm);
+    flex-wrap: wrap;
+}
+
+.probability-current-text {
+    font-size: var(--font-size-lg);
+    font-weight: 700;
+    color: var(--text-color);
+}
+
+.feedback-indicator {
+    font-size: 1.5rem;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    animation: indicatorAppear 150ms ease-out;
+}
+
+@keyframes indicatorAppear {
+    from {
+        opacity: 0;
+        transform: scale(0.5);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.feedback-indicator.fade-out {
+    animation: indicatorFadeOut 300ms ease-out forwards;
+    animation-delay: 1.5s;
+}
+
+@keyframes indicatorFadeOut {
+    to {
+        opacity: 0;
+        transform: scale(0.8);
+    }
+}
+
+.feedback-indicator.strong-increase {
+    color: #4CAF50;
+    animation: pulse 0.3s ease-out;
+}
+
+.feedback-indicator.small-increase {
+    color: #8BC34A;
+}
+
+.feedback-indicator.neutral {
+    color: #999;
+}
+
+.feedback-indicator.small-decrease {
+    color: #FF9800;
+}
+
+.feedback-indicator.strong-decrease {
+    color: #E53935;
+    animation: pulse 0.3s ease-out;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.2);
+    }
+}
+
+/* Journey Summary Stats (End Screen) */
+.journey-summary {
+    background: var(--text-bg);
+    padding: var(--spacing-md);
+    border-radius: var(--border-radius-sm);
+    margin-bottom: var(--spacing-md);
+}
+
+.journey-summary h4 {
+    margin-bottom: var(--spacing-sm);
+    color: var(--text-color);
+}
+
+.journey-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-md);
+}
+
+.journey-stat {
+    text-align: center;
+    padding: var(--spacing-sm);
+    background: white;
+    border-radius: var(--border-radius-sm);
+}
+
+.journey-stat-value {
+    font-size: var(--font-size-xl);
+    font-weight: 700;
+    color: var(--primary-color);
+}
+
+.journey-stat-label {
+    font-size: var(--font-size-sm);
+    color: #666;
+    margin-top: var(--spacing-xs);
+}
+
+.journey-path-display {
+    margin-top: var(--spacing-md);
 }
 
 /* Feedback Messages */
@@ -743,6 +1003,60 @@ body {
 /* ===========================
    Responsive Design
    =========================== */
+@media (max-width: 767px) {
+    /* Mobile: Stack path segments vertically */
+    .path-segments {
+        flex-direction: column;
+    }
+
+    .path-segment {
+        width: 100%;
+        min-width: 100%;
+    }
+
+    /* Mobile: Smaller trajectory chart */
+    .trajectory-sparkline {
+        height: 80px;
+    }
+
+    /* Mobile: Wrap remaining turns */
+    .remaining-turns {
+        flex-wrap: wrap;
+    }
+
+    .remaining-turn-dot {
+        width: 16px;
+        height: 16px;
+    }
+
+    /* Mobile: Stack journey stats */
+    .journey-stats {
+        grid-template-columns: 1fr;
+    }
+
+    /* Mobile: Smaller path segments in end screen */
+    .journey-path-display .path-segments {
+        flex-direction: row;
+        flex-wrap: wrap;
+    }
+
+    .journey-path-display .path-segment {
+        min-width: 60px;
+        width: auto;
+        flex: 0 1 auto;
+    }
+
+    /* Mobile: Adjust probability status */
+    .probability-status {
+        flex-direction: column;
+        gap: var(--spacing-sm);
+    }
+
+    .probability-current-text {
+        font-size: var(--font-size-base);
+    }
+}
+
 @media (min-width: 768px) {
     .main-content {
         padding: var(--spacing-xl) var(--spacing-md);
@@ -754,6 +1068,11 @@ body {
 
     .probability-table {
         font-size: var(--font-size-lg);
+    }
+
+    /* Desktop: Better path segment layout */
+    .path-segment {
+        max-width: 80px;
     }
 }
 
