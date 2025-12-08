@@ -50,18 +50,6 @@ function setupEventListeners() {
 
   // Give up button
   elements.giveUpBtn.addEventListener('click', handleGiveUp);
-
-  // See summary button
-  elements.seeSummaryBtn.addEventListener('click', () => {
-    if (gameState.journeySummaryHTML) {
-      ui.showSummaryModal(gameState.journeySummaryHTML);
-    }
-  });
-
-  // Close summary button
-  elements.closeSummaryBtn.addEventListener('click', () => {
-    ui.hideSummaryModal();
-  });
 }
 
 /**
@@ -107,11 +95,16 @@ export async function startGame() {
   gameState.probabilityHistory.push(0);
   ui.updateTrajectorySparkline(gameState.probabilityHistory);
 
-  // Enable nudge input
+  // Enable nudge input and show End Game button
   const elements = ui.getElements();
   elements.nudgeInput.disabled = false;
   elements.submitNudgeBtn.disabled = false;
   elements.nudgeInput.value = '';
+
+  // Show the End Game button
+  if (elements.giveUpBtn.parentElement) {
+    ui.show(elements.giveUpBtn.parentElement);
+  }
 
   // Show introduction modal, then focus input when dismissed
   ui.showMode2Introduction(() => {
@@ -304,68 +297,30 @@ function provideFeedback() {
 async function endGame() {
   gameState.isActive = false;
 
-  // Disable input
+  // Disable input and hide End Game button
   const elements = ui.getElements();
   elements.nudgeInput.disabled = true;
   elements.submitNudgeBtn.disabled = true;
+  ui.hide(elements.giveUpBtn.parentElement); // Hide the give-up-container
 
   const results = ui.createMode2EndScreen(
     gameState.hiddenTarget,
     gameState.hasWon,
     gameState.currentTurn,
-    gameState.currentProbability
-  );
-
-  // Create journey summary for the summary modal
-  let journeySummary = ui.createJourneySummary(
+    gameState.currentProbability,
     gameState.probabilityHistory,
     gameState.nudgeHistory
   );
 
-  // Add nudge history to journey summary
-  if (gameState.nudgeHistory.length > 0) {
-    const nudgeListHTML = gameState.nudgeHistory
-      .map((nudge, index) => {
-        const prob = gameState.probabilityHistory[index + 1] || 0;
-        return `<li><strong>Turn ${index + 1}:</strong> "${nudge}" → ${Math.round(prob)}%</li>`;
-      })
-      .join('');
+  // Show end screen without summary button (analysis is in the end screen now)
+  ui.showEndScreen(results, false);
 
-    journeySummary += `
-      <div class="end-results-section">
-        <h3>Your Nudges</h3>
-        <ul style="text-align: left; padding-left: 20px;">
-          ${nudgeListHTML}
-        </ul>
-      </div>
-    `;
-  }
-
-  // Add placeholder for AI analysis
-  journeySummary += `
-    <div class="end-results-section ai-analysis-section">
-      <h3>📊 AI-Powered Analysis</h3>
-      <div id="ai-analysis-content" class="ai-analysis-content">
-        <div class="loading-analysis">
-          <div class="spinner-small"></div>
-          <p>Analyzing your strategy...</p>
-        </div>
-      </div>
-    </div>
-  `;
-
-  // Store journey summary for later viewing
-  gameState.journeySummaryHTML = journeySummary;
-
-  // Show end screen with summary button enabled for Mode 2
-  ui.showEndScreen(results, true);
-
-  // Generate AI analysis asynchronously
+  // Generate AI analysis asynchronously and update the end screen
   generateAndDisplayAnalysis();
 }
 
 /**
- * Generate AI analysis and update the summary modal
+ * Generate AI analysis and update the end screen
  */
 async function generateAndDisplayAnalysis() {
   try {
@@ -384,49 +339,8 @@ async function generateAndDisplayAnalysis() {
     // Format the analysis with proper HTML
     const formattedAnalysis = formatAnalysisHTML(analysis);
 
-    // Update the journey summary with the analysis
-    let journeySummary = ui.createJourneySummary(
-      gameState.probabilityHistory,
-      gameState.nudgeHistory
-    );
-
-    // Add nudge history
-    if (gameState.nudgeHistory.length > 0) {
-      const nudgeListHTML = gameState.nudgeHistory
-        .map((nudge, index) => {
-          const prob = gameState.probabilityHistory[index + 1] || 0;
-          return `<li><strong>Turn ${index + 1}:</strong> "${nudge}" → ${Math.round(prob)}%</li>`;
-        })
-        .join('');
-
-      journeySummary += `
-        <div class="end-results-section">
-          <h3>Your Nudges</h3>
-          <ul style="text-align: left; padding-left: 20px;">
-            ${nudgeListHTML}
-          </ul>
-        </div>
-      `;
-    }
-
-    // Add analysis
-    journeySummary += `
-      <div class="end-results-section ai-analysis-section">
-        <h3>📊 AI-Powered Analysis</h3>
-        <div class="ai-analysis-content">
-          ${formattedAnalysis}
-        </div>
-      </div>
-    `;
-
-    // Update stored summary
-    gameState.journeySummaryHTML = journeySummary;
-
-    // If the summary modal is already open, update it
-    const summaryContent = document.getElementById('summary-content');
-    if (summaryContent && !summaryContent.parentElement.parentElement.classList.contains('hidden')) {
-      summaryContent.innerHTML = journeySummary;
-    }
+    // Update the end screen with the analysis
+    ui.updateEndScreenAnalysis(formattedAnalysis);
 
   } catch (error) {
     console.error('Error generating analysis:', error);
@@ -434,46 +348,8 @@ async function generateAndDisplayAnalysis() {
     // Show error message
     const errorHTML = '<p style="color: #f44336;">Unable to generate analysis at this time. Please try again later.</p>';
 
-    // Update summary with error
-    let journeySummary = ui.createJourneySummary(
-      gameState.probabilityHistory,
-      gameState.nudgeHistory
-    );
-
-    if (gameState.nudgeHistory.length > 0) {
-      const nudgeListHTML = gameState.nudgeHistory
-        .map((nudge, index) => {
-          const prob = gameState.probabilityHistory[index + 1] || 0;
-          return `<li><strong>Turn ${index + 1}:</strong> "${nudge}" → ${Math.round(prob)}%</li>`;
-        })
-        .join('');
-
-      journeySummary += `
-        <div class="end-results-section">
-          <h3>Your Nudges</h3>
-          <ul style="text-align: left; padding-left: 20px;">
-            ${nudgeListHTML}
-          </ul>
-        </div>
-      `;
-    }
-
-    journeySummary += `
-      <div class="end-results-section ai-analysis-section">
-        <h3>📊 AI-Powered Analysis</h3>
-        <div class="ai-analysis-content">
-          ${errorHTML}
-        </div>
-      </div>
-    `;
-
-    gameState.journeySummaryHTML = journeySummary;
-
-    // Update modal if open
-    const summaryContent = document.getElementById('summary-content');
-    if (summaryContent && !summaryContent.parentElement.parentElement.classList.contains('hidden')) {
-      summaryContent.innerHTML = journeySummary;
-    }
+    // Update end screen with error
+    ui.updateEndScreenAnalysis(errorHTML);
   }
 }
 
@@ -520,6 +396,11 @@ export function reset() {
   elements.nudgeInput.value = '';
   elements.nudgeInput.disabled = false;
   elements.submitNudgeBtn.disabled = false;
+
+  // Show the End Game button again
+  if (elements.giveUpBtn.parentElement) {
+    ui.show(elements.giveUpBtn.parentElement);
+  }
 }
 
 /**

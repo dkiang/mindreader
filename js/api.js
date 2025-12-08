@@ -402,7 +402,7 @@ export async function generateNudgeAnalysis(startingPrompt, nudges, probabilitie
     const messages = [
       {
         role: 'system',
-        content: 'You are an expert at analyzing narrative steering and language model behavior. Provide insightful, specific feedback about how effectively the user steered the narrative toward the target concept.'
+        content: 'You are an expert at analyzing narrative steering and language model behavior. Provide insightful, specific feedback directly to the user about how effectively they steered the narrative toward the target concept. Always use second person (you, your) when addressing the user.'
       },
       {
         role: 'user',
@@ -410,19 +410,21 @@ export async function generateNudgeAnalysis(startingPrompt, nudges, probabilitie
 
 Starting prompt: "${startingPrompt}"
 
-User's nudges and results:
+The user's nudges and results:
 ${nudgeDetails}
 
 Final narrative: "${narrative}"
 
 ${won ? 'The user successfully reached 100% probability.' : `The user reached ${Math.round(probabilities[probabilities.length - 1])}% probability but did not hit 100%.`}
 
-Provide a personalized analysis with:
-1. **Overall Strategy**: Assess their overall approach (2-3 sentences)
-2. **Most Effective Nudge**: Identify which nudge had the biggest positive impact and explain why it worked
-3. **Least Effective Nudge**: Identify which nudge was least helpful and explain why
-4. **Key Insight**: One specific learning point about steering AI narratives
-5. **Suggestion**: One concrete suggestion for how they could improve next time
+Provide a personalized analysis speaking directly to the user in second person with:
+1. **Overall Strategy**: Assess their overall approach (2-3 sentences). Talk TO them using "you" and "your".
+2. **Most Effective Nudge**: Identify which of their nudges had the biggest positive impact and explain why it worked. Address them directly.
+3. **Least Effective Nudge**: Identify which nudge was least helpful and explain why. Use second person.
+4. **Key Insight**: One specific learning point about steering AI narratives. Frame it as something they discovered or should understand.
+5. **Suggestion**: One concrete suggestion for how they could improve next time. Give direct advice using "you should" or similar.
+
+IMPORTANT: Write the entire analysis in second person, as if you're speaking directly to the user. Use "you", "your", "you're" throughout. Never use "the user" or "they/their" - always address the user directly.
 
 Keep the tone encouraging but analytical. Be specific about semantic relationships and why certain words/phrases moved the probability.`
       }

@@ -495,12 +495,35 @@ export function createMode1EndScreen(score, total, startingPrompt, gameText, com
 }
 
 /**
- * Create end screen content for Mode 2 (without journey summary)
+ * Create end screen content for Mode 2 with AI analysis placeholder
  */
-export function createMode2EndScreen(target, success, turns, finalProbability) {
+export function createMode2EndScreen(target, success, turns, finalProbability, probabilityHistory, nudgeHistory) {
   const resultMessage = success
     ? `Success! You successfully steered the narrative toward "${target}" in ${turns} turns.`
     : `The hidden target was "${target}". You reached ${Math.round(finalProbability)}% probability in ${turns} turns.`;
+
+  // Create journey summary
+  let journeySummary = createJourneySummary(probabilityHistory, nudgeHistory);
+
+  // Add nudge history
+  let nudgeHistoryHTML = '';
+  if (nudgeHistory.length > 0) {
+    const nudgeListHTML = nudgeHistory
+      .map((nudge, index) => {
+        const prob = probabilityHistory[index + 1] || 0;
+        return `<li><strong>Turn ${index + 1}:</strong> "${nudge}" → ${Math.round(prob)}%</li>`;
+      })
+      .join('');
+
+    nudgeHistoryHTML = `
+      <div class="end-results-section">
+        <h3>Your Nudges</h3>
+        <ul style="text-align: left; padding-left: 20px;">
+          ${nudgeListHTML}
+        </ul>
+      </div>
+    `;
+  }
 
   const content = `
     <div class="end-results-section">
@@ -510,14 +533,16 @@ export function createMode2EndScreen(target, success, turns, finalProbability) {
       </p>
       <p>${resultMessage}</p>
     </div>
-    <div class="end-results-section">
-      <h3>Key Insights</h3>
-      <ul style="text-align: left; padding-left: 20px;">
-        <li>Steering AI narratives requires explicit signals and related concepts.</li>
-        <li>AI models have strong "momentum" toward their initial direction.</li>
-        <li>Subtle hints often don't work - you need clear, direct language.</li>
-        <li>Understanding semantic relationships is key to influencing AI outputs.</li>
-      </ul>
+    ${journeySummary}
+    ${nudgeHistoryHTML}
+    <div class="end-results-section ai-analysis-section">
+      <h3>📊 AI-Powered Analysis</h3>
+      <div id="ai-analysis-content-endscreen" class="ai-analysis-content">
+        <div class="loading-analysis">
+          <div class="spinner-small"></div>
+          <p>Analyzing your strategy...</p>
+        </div>
+      </div>
     </div>
   `;
 
@@ -525,6 +550,16 @@ export function createMode2EndScreen(target, success, turns, finalProbability) {
     title: success ? 'Success!' : 'Game Over',
     content: content
   };
+}
+
+/**
+ * Update the AI analysis in the end screen
+ */
+export function updateEndScreenAnalysis(analysisHTML) {
+  const analysisContent = document.getElementById('ai-analysis-content-endscreen');
+  if (analysisContent) {
+    analysisContent.innerHTML = analysisHTML;
+  }
 }
 
 /**
