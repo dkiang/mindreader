@@ -751,6 +751,63 @@ body {
     margin-top: var(--spacing-md);
 }
 
+/* AI Analysis Section */
+.ai-analysis-section {
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    border: 2px solid var(--primary-color);
+    border-radius: var(--border-radius);
+    padding: var(--spacing-lg);
+    margin-top: var(--spacing-lg);
+}
+
+.ai-analysis-section h3 {
+    color: var(--primary-color);
+    margin-bottom: var(--spacing-md);
+    font-size: var(--font-size-xl);
+}
+
+.ai-analysis-content {
+    background: white;
+    padding: var(--spacing-md);
+    border-radius: var(--border-radius-sm);
+    line-height: 1.8;
+    color: var(--text-color);
+}
+
+.ai-analysis-content p {
+    margin-bottom: var(--spacing-md);
+}
+
+.ai-analysis-content strong {
+    color: var(--primary-color);
+    font-weight: 700;
+}
+
+/* Loading Analysis Spinner */
+.loading-analysis {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: var(--spacing-xl);
+    gap: var(--spacing-md);
+}
+
+.spinner-small {
+    width: 32px;
+    height: 32px;
+    border: 3px solid var(--border-color);
+    border-top: 3px solid var(--primary-color);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+.loading-analysis p {
+    color: #666;
+    font-size: var(--font-size-base);
+    font-weight: 500;
+}
+
 /* Feedback Messages */
 .feedback-message {
     padding: var(--spacing-md);

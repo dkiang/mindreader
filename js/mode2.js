@@ -4,7 +4,7 @@
  */
 
 import { CONFIG, getRandomPrompt, getRandomItem, countWords } from './config.js';
-import { estimateTargetProbability } from './api.js';
+import { estimateTargetProbability, generateNudgeAnalysis } from './api.js';
 import * as ui from './ui.js';
 
 // Game state
@@ -13,13 +13,15 @@ let gameState = {
   hiddenTarget: '',
   currentTurn: 0,
   maxTurns: CONFIG.mode2.maxTurns,
+  startingPrompt: '',
   currentContext: '',
   currentProbability: 0,
   previousProbability: 0,
   probabilityHistory: [],
   nudgeHistory: [],
   hasWon: false,
-  journeySummaryHTML: ''
+  journeySummaryHTML: '',
+  aiAnalysis: null
 };
 
 /**
@@ -67,18 +69,21 @@ function setupEventListeners() {
  */
 export async function startGame() {
   // Reset game state
+  const startingPrompt = getRandomPrompt('mode2');
   gameState = {
     isActive: true,
     hiddenTarget: getRandomItem(CONFIG.mode2.targets),
     currentTurn: 0,
     maxTurns: CONFIG.mode2.maxTurns,
-    currentContext: getRandomPrompt('mode2'),
+    startingPrompt: startingPrompt,
+    currentContext: startingPrompt,
     currentProbability: 0,
     previousProbability: 0,
     probabilityHistory: [],
     nudgeHistory: [],
     hasWon: false,
-    journeySummaryHTML: ''
+    journeySummaryHTML: '',
+    aiAnalysis: null
   };
 
   console.log('Hidden target:', gameState.hiddenTarget); // For debugging
@@ -296,7 +301,7 @@ function provideFeedback() {
 /**
  * End the game and show results
  */
-function endGame() {
+async function endGame() {
   gameState.isActive = false;
 
   // Disable input
@@ -336,11 +341,153 @@ function endGame() {
     `;
   }
 
+  // Add placeholder for AI analysis
+  journeySummary += `
+    <div class="end-results-section ai-analysis-section">
+      <h3>📊 AI-Powered Analysis</h3>
+      <div id="ai-analysis-content" class="ai-analysis-content">
+        <div class="loading-analysis">
+          <div class="spinner-small"></div>
+          <p>Analyzing your strategy...</p>
+        </div>
+      </div>
+    </div>
+  `;
+
   // Store journey summary for later viewing
   gameState.journeySummaryHTML = journeySummary;
 
   // Show end screen with summary button enabled for Mode 2
   ui.showEndScreen(results, true);
+
+  // Generate AI analysis asynchronously
+  generateAndDisplayAnalysis();
+}
+
+/**
+ * Generate AI analysis and update the summary modal
+ */
+async function generateAndDisplayAnalysis() {
+  try {
+    // Generate analysis
+    const analysis = await generateNudgeAnalysis(
+      gameState.startingPrompt,
+      gameState.nudgeHistory,
+      gameState.probabilityHistory,
+      gameState.hiddenTarget,
+      gameState.hasWon
+    );
+
+    // Store analysis
+    gameState.aiAnalysis = analysis;
+
+    // Format the analysis with proper HTML
+    const formattedAnalysis = formatAnalysisHTML(analysis);
+
+    // Update the journey summary with the analysis
+    let journeySummary = ui.createJourneySummary(
+      gameState.probabilityHistory,
+      gameState.nudgeHistory
+    );
+
+    // Add nudge history
+    if (gameState.nudgeHistory.length > 0) {
+      const nudgeListHTML = gameState.nudgeHistory
+        .map((nudge, index) => {
+          const prob = gameState.probabilityHistory[index + 1] || 0;
+          return `<li><strong>Turn ${index + 1}:</strong> "${nudge}" → ${Math.round(prob)}%</li>`;
+        })
+        .join('');
+
+      journeySummary += `
+        <div class="end-results-section">
+          <h3>Your Nudges</h3>
+          <ul style="text-align: left; padding-left: 20px;">
+            ${nudgeListHTML}
+          </ul>
+        </div>
+      `;
+    }
+
+    // Add analysis
+    journeySummary += `
+      <div class="end-results-section ai-analysis-section">
+        <h3>📊 AI-Powered Analysis</h3>
+        <div class="ai-analysis-content">
+          ${formattedAnalysis}
+        </div>
+      </div>
+    `;
+
+    // Update stored summary
+    gameState.journeySummaryHTML = journeySummary;
+
+    // If the summary modal is already open, update it
+    const summaryContent = document.getElementById('summary-content');
+    if (summaryContent && !summaryContent.parentElement.parentElement.classList.contains('hidden')) {
+      summaryContent.innerHTML = journeySummary;
+    }
+
+  } catch (error) {
+    console.error('Error generating analysis:', error);
+
+    // Show error message
+    const errorHTML = '<p style="color: #f44336;">Unable to generate analysis at this time. Please try again later.</p>';
+
+    // Update summary with error
+    let journeySummary = ui.createJourneySummary(
+      gameState.probabilityHistory,
+      gameState.nudgeHistory
+    );
+
+    if (gameState.nudgeHistory.length > 0) {
+      const nudgeListHTML = gameState.nudgeHistory
+        .map((nudge, index) => {
+          const prob = gameState.probabilityHistory[index + 1] || 0;
+          return `<li><strong>Turn ${index + 1}:</strong> "${nudge}" → ${Math.round(prob)}%</li>`;
+        })
+        .join('');
+
+      journeySummary += `
+        <div class="end-results-section">
+          <h3>Your Nudges</h3>
+          <ul style="text-align: left; padding-left: 20px;">
+            ${nudgeListHTML}
+          </ul>
+        </div>
+      `;
+    }
+
+    journeySummary += `
+      <div class="end-results-section ai-analysis-section">
+        <h3>📊 AI-Powered Analysis</h3>
+        <div class="ai-analysis-content">
+          ${errorHTML}
+        </div>
+      </div>
+    `;
+
+    gameState.journeySummaryHTML = journeySummary;
+
+    // Update modal if open
+    const summaryContent = document.getElementById('summary-content');
+    if (summaryContent && !summaryContent.parentElement.parentElement.classList.contains('hidden')) {
+      summaryContent.innerHTML = journeySummary;
+    }
+  }
+}
+
+/**
+ * Format AI analysis text into HTML
+ */
+function formatAnalysisHTML(analysis) {
+  // Convert markdown-style bold to HTML
+  let formatted = analysis
+    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\n\n/g, '</p><p>')
+    .replace(/\n/g, '<br>');
+
+  return `<div style="line-height: 1.8;">${formatted}</div>`;
 }
 
 /**
@@ -352,13 +499,15 @@ export function reset() {
     hiddenTarget: '',
     currentTurn: 0,
     maxTurns: CONFIG.mode2.maxTurns,
+    startingPrompt: '',
     currentContext: '',
     currentProbability: 0,
     previousProbability: 0,
     probabilityHistory: [],
     nudgeHistory: [],
     hasWon: false,
-    journeySummaryHTML: ''
+    journeySummaryHTML: '',
+    aiAnalysis: null
   };
 
   ui.clearGameUI();

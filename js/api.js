@@ -378,6 +378,70 @@ function generateTargetVariations(target) {
 }
 
 /**
+ * Generate personalized analysis of user's nudges (Mode 2)
+ * @param {string} startingPrompt - The initial prompt
+ * @param {Array<string>} nudges - Array of user nudges
+ * @param {Array<number>} probabilities - Probability after each nudge
+ * @param {string} target - The hidden target concept
+ * @param {boolean} won - Whether the user won
+ * @returns {Promise<string>} - Personalized analysis
+ */
+export async function generateNudgeAnalysis(startingPrompt, nudges, probabilities, target, won) {
+  try {
+    // Build the narrative showing how the story evolved
+    let narrative = startingPrompt;
+    const nudgeDetails = nudges.map((nudge, index) => {
+      const prevProb = probabilities[index] || 0;
+      const newProb = probabilities[index + 1] || 0;
+      const change = newProb - prevProb;
+      narrative += ' ' + nudge;
+
+      return `Turn ${index + 1}: "${nudge}" → Probability changed from ${Math.round(prevProb)}% to ${Math.round(newProb)}% (${change > 0 ? '+' : ''}${Math.round(change)}%)`;
+    }).join('\n');
+
+    const messages = [
+      {
+        role: 'system',
+        content: 'You are an expert at analyzing narrative steering and language model behavior. Provide insightful, specific feedback about how effectively the user steered the narrative toward the target concept.'
+      },
+      {
+        role: 'user',
+        content: `Analyze this attempt to steer an AI narrative toward the hidden target concept "${target}".
+
+Starting prompt: "${startingPrompt}"
+
+User's nudges and results:
+${nudgeDetails}
+
+Final narrative: "${narrative}"
+
+${won ? 'The user successfully reached 100% probability.' : `The user reached ${Math.round(probabilities[probabilities.length - 1])}% probability but did not hit 100%.`}
+
+Provide a personalized analysis with:
+1. **Overall Strategy**: Assess their overall approach (2-3 sentences)
+2. **Most Effective Nudge**: Identify which nudge had the biggest positive impact and explain why it worked
+3. **Least Effective Nudge**: Identify which nudge was least helpful and explain why
+4. **Key Insight**: One specific learning point about steering AI narratives
+5. **Suggestion**: One concrete suggestion for how they could improve next time
+
+Keep the tone encouraging but analytical. Be specific about semantic relationships and why certain words/phrases moved the probability.`
+      }
+    ];
+
+    const response = await makeOpenAIRequest(messages, {
+      temperature: 0.7,
+      maxTokens: 500
+    });
+
+    return response.choices[0].message.content.trim();
+  } catch (error) {
+    console.error('Error generating nudge analysis:', error);
+    // Return a generic message on error
+    return 'Analysis unavailable at this time. Your journey toward the target was recorded, and you can review your nudges in the summary above.';
+  }
+}
+
+/**
  * Test API connection
  * @returns {Promise<Object>} - {success: boolean, error: string}
  */
