@@ -135,6 +135,124 @@ System interprets number into meter %.
 	* Turn counter
 	* Feedback messages (“Small increase”, “Strong increase”, “Decrease”)
 
+## Mode 2 — Visual Feedback System
+
+### 3.5. Convergence Path Visualization
+
+Replace the simple probability meter with a dual visualization system that illustrates the user's journey toward or away from the hidden target concept.
+
+#### Primary Visualization: Color-Coded Path
+
+A horizontal path that grows with each turn, where each segment represents one nudge attempt:
+```
+Turn:  1       2        3        4        5        6
+     [████] [████] [████] [████] [████] [████]
+      12%     25%     31%     45%     62%     78%
+```
+
+**Color Scale (Probability → Color):**
+| Probability Range | Color | Hex Code | Meaning |
+|-------------------|-------|----------|---------|
+| 0–20% | Deep Red | #E53935 | Far from target |
+| 21–40% | Orange | #FF9800 | Diverging |
+| 41–60% | Yellow | #FFC107 | Neutral zone |
+| 61–80% | Light Green | #8BC34A | Approaching |
+| 81–100% | Bright Green | #4CAF50 | Converging |
+
+Each segment displays its probability percentage below or on hover.
+
+#### Secondary Visualization: Trajectory Sparkline
+
+A small line or area chart positioned above the color path showing probability over time:
+
+- X-axis: Turn number (1 to max turns)
+- Y-axis: Probability (0% to 100%)
+- Line color: Matches current probability color
+- Optional: Shaded area under the line using gradient from path colors
+- Target line: Dashed horizontal line at 100%
+```
+100% ┤- - - - - - - - - - - - - - target
+     │                        ╭───
+ 75% ┤                    ╭───╯
+     │                ╭───╯
+ 50% ┤            ╭───╯
+     │        ╭───╯
+ 25% ┤    ╭───╯
+     │╭───╯
+  0% ┴────┴────┴────┴────┴────┴────
+     1    2    3    4    5    6
+```
+
+#### Visual Feedback Indicators
+
+Replace text-based feedback ("Strong increase", "Small decrease") with visual indicators:
+
+| Change | Icon | Animation |
+|--------|------|-----------|
+| Strong increase (≥15%) | ↑↑ or 🚀 | Pulse green, path segment glows |
+| Small increase (5–14%) | ↑ | Fade in green |
+| Minimal change (-4% to +4%) | → | Neutral, subtle pulse |
+| Small decrease (-5% to -14%) | ↓ | Fade in orange |
+| Strong decrease (≤-15%) | ↓↓ | Pulse red, shake effect |
+
+Optional: Tooltip or small text appears briefly (e.g., "+18%") then fades.
+
+#### Layout Structure
+```
+┌─────────────────────────────────────────────────────┐
+│                 Trajectory Graph                     │
+│  100% ┤- - - - - - - - - - - - - -                  │
+│       │                    ╭───                      │
+│   50% ┤            ╭───────╯                         │
+│       │    ╭───────╯                                 │
+│    0% ┴────┴────┴────┴────┴────                     │
+├─────────────────────────────────────────────────────┤
+│                 Color-Coded Path                     │
+│  [████][████][████][████][████]     ○ ○ ○ ○ ○       │
+│   12%   25%   38%   52%   71%     (remaining turns) │
+├─────────────────────────────────────────────────────┤
+│              Current: 71%  ↑↑ +19%                  │
+└─────────────────────────────────────────────────────┘
+```
+
+#### Remaining Turns Indicator
+
+Show remaining turns as empty circles or faded segments to the right of the active path, giving users a sense of how many attempts remain.
+
+#### End Screen Enhancement
+
+The final results screen should include:
+
+1. **Complete path visualization** — All segments filled with their respective colors
+2. **Full trajectory graph** — Complete line chart of the probability journey
+3. **Journey summary stats:**
+   - Starting probability
+   - Peak probability reached
+   - Final probability
+   - Biggest single jump (which nudge caused it)
+   - Number of turns where probability increased vs. decreased
+
+#### Mobile Considerations
+
+- Path segments stack or wrap on narrow screens
+- Sparkline chart maintains aspect ratio, scales down
+- Touch targets remain ≥44px
+- Percentage labels may show on tap rather than always visible
+
+#### Accessibility
+
+- Color is not the sole indicator; percentages are always available
+- High contrast mode support
+- Screen reader announces: "Turn 3: 38%, increased by 13 percentage points"
+- Sparkline includes aria-label describing trend (e.g., "Probability trending upward over 5 turns")
+
+#### Animation Timing
+
+- Path segment appears: 300ms ease-out
+- Color transition: 200ms
+- Sparkline point addition: 300ms with line draw animation
+- Feedback icon: 150ms appear, hold 1.5s, 300ms fade
+
 # **4. User Interface & UX**
 ##4.1. Layout Structure (Shared Across Both Modes)
 -----------------------------------------

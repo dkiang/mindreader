@@ -409,8 +409,8 @@ async function handleTokenSelection(selectedToken) {
 
   // Show feedback and wait for user to dismiss it
   const feedbackMessage = isCorrect
-    ? 'Correct! The AI chose this token.'
-    : `Incorrect. The AI chose "${gameState.correctToken}".`;
+    ? 'The AI also chose this token.'
+    : `The AI chose "${gameState.correctToken}".`;
   const feedbackType = isCorrect ? 'success' : 'error';
 
   ui.showFeedback(feedbackMessage, feedbackType, true, async () => {
