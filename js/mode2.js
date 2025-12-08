@@ -43,8 +43,25 @@ function setupEventListeners() {
 
   // Enter key in nudge input
   elements.nudgeInput.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') {
+    if (e.key === 'Enter' && !elements.submitNudgeBtn.disabled) {
       handleNudgeSubmit();
+    }
+  });
+
+  // Real-time word counter
+  elements.nudgeInput.addEventListener('input', (e) => {
+    const text = e.target.value;
+    const isWithinLimit = ui.updateWordCounter(text, CONFIG.mode2.maxNudgeWords);
+
+    // Disable submit button if over word limit
+    if (isWithinLimit) {
+      elements.submitNudgeBtn.disabled = false;
+      elements.submitNudgeBtn.style.opacity = '1';
+      elements.submitNudgeBtn.style.cursor = 'pointer';
+    } else {
+      elements.submitNudgeBtn.disabled = true;
+      elements.submitNudgeBtn.style.opacity = '0.5';
+      elements.submitNudgeBtn.style.cursor = 'not-allowed';
     }
   });
 
@@ -101,6 +118,9 @@ export async function startGame() {
   elements.submitNudgeBtn.disabled = false;
   elements.nudgeInput.value = '';
 
+  // Reset word counter
+  ui.resetWordCounter();
+
   // Show the End Game button
   if (elements.giveUpBtn.parentElement) {
     ui.show(elements.giveUpBtn.parentElement);
@@ -155,8 +175,14 @@ async function handleNudgeSubmit() {
     // Update text display
     ui.setCurrentText(gameState.currentContext);
 
-    // Clear input
+    // Clear input and reset word counter
     elements.nudgeInput.value = '';
+    ui.resetWordCounter();
+
+    // Re-enable submit button
+    elements.submitNudgeBtn.disabled = false;
+    elements.submitNudgeBtn.style.opacity = '1';
+    elements.submitNudgeBtn.style.cursor = 'pointer';
 
     // Increment turn
     gameState.currentTurn++;
@@ -396,6 +422,13 @@ export function reset() {
   elements.nudgeInput.value = '';
   elements.nudgeInput.disabled = false;
   elements.submitNudgeBtn.disabled = false;
+
+  // Reset word counter
+  ui.resetWordCounter();
+
+  // Reset button styling
+  elements.submitNudgeBtn.style.opacity = '1';
+  elements.submitNudgeBtn.style.cursor = 'pointer';
 
   // Show the End Game button again
   if (elements.giveUpBtn.parentElement) {

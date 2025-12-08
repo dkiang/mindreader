@@ -310,7 +310,7 @@ body {
 #nudge-input {
     width: 100%;
     padding: 12px;
-    margin-bottom: var(--spacing-md);
+    margin-bottom: var(--spacing-xs);
     border: 2px solid var(--border-color);
     border-radius: var(--border-radius-sm);
     font-size: var(--font-size-base);
@@ -319,6 +319,25 @@ body {
 #nudge-input:focus {
     outline: none;
     border-color: var(--primary-color);
+}
+
+/* Word Counter */
+.word-counter {
+    text-align: right;
+    font-size: var(--font-size-sm);
+    color: #666;
+    margin-bottom: var(--spacing-sm);
+    font-weight: 500;
+}
+
+.word-counter.over-limit {
+    color: var(--error-color);
+    font-weight: 700;
+}
+
+.word-counter #word-count {
+    font-weight: 700;
+    font-size: var(--font-size-base);
 }
 
 .turn-counter {

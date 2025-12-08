@@ -46,6 +46,9 @@ export function initUI() {
   elements.currentTurn = document.getElementById('current-turn');
   elements.maxTurns = document.getElementById('max-turns');
 
+  elements.wordCount = document.getElementById('word-count');
+  elements.wordCounter = document.querySelector('.word-counter');
+
   elements.endScreen = document.getElementById('end-screen');
   elements.endTitle = document.getElementById('end-title');
   elements.endResults = document.getElementById('end-results');
@@ -559,6 +562,54 @@ export function updateEndScreenAnalysis(analysisHTML) {
   const analysisContent = document.getElementById('ai-analysis-content-endscreen');
   if (analysisContent) {
     analysisContent.innerHTML = analysisHTML;
+  }
+}
+
+/**
+ * Update word counter for nudge input
+ * @param {string} text - The text to count words from
+ * @param {number} maxWords - Maximum allowed words
+ * @returns {boolean} - Whether the text is within the word limit
+ */
+export function updateWordCounter(text, maxWords) {
+  const wordCount = countWords(text);
+
+  if (elements.wordCount) {
+    elements.wordCount.textContent = wordCount;
+  }
+
+  const isOverLimit = wordCount > maxWords;
+
+  if (elements.wordCounter) {
+    if (isOverLimit) {
+      elements.wordCounter.classList.add('over-limit');
+    } else {
+      elements.wordCounter.classList.remove('over-limit');
+    }
+  }
+
+  return !isOverLimit;
+}
+
+/**
+ * Count words in a string (helper function)
+ * @param {string} text - Text to count words from
+ * @returns {number} - Number of words
+ */
+function countWords(text) {
+  if (!text || text.trim() === '') return 0;
+  return text.trim().split(/\s+/).length;
+}
+
+/**
+ * Reset word counter
+ */
+export function resetWordCounter() {
+  if (elements.wordCount) {
+    elements.wordCount.textContent = '0';
+  }
+  if (elements.wordCounter) {
+    elements.wordCounter.classList.remove('over-limit');
   }
 }
 
