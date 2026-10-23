@@ -383,8 +383,8 @@ async function generateAndDisplayAnalysis() {
  * Format AI analysis text into HTML
  */
 function formatAnalysisHTML(analysis) {
-  // Convert markdown-style bold to HTML
-  let formatted = analysis
+  // Escape model text before converting the supported formatting to HTML.
+  let formatted = ui.escapeHtml(analysis)
     .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
     .replace(/\n\n/g, '</p><p>')
     .replace(/\n/g, '<br>');

@@ -7,6 +7,15 @@ import { CONFIG, formatProbability } from './config.js';
 // DOM Element Cache
 const elements = {};
 
+export function escapeHtml(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
 /**
  * Initialize DOM element cache
  */
@@ -460,9 +469,12 @@ export function createMode1EndScreen(score, total, startingPrompt, gameText, com
       : ' ' + completion;
   }
 
+  const safeStartingPrompt = escapeHtml(startingPrompt);
+  const safeGamePlayedPortion = escapeHtml(gamePlayedPortion);
+  const safeFormattedCompletion = escapeHtml(formattedCompletion);
   const completeSentence = formattedCompletion
-    ? `${startingPrompt}<strong>${gamePlayedPortion}</strong>${formattedCompletion}`
-    : `${startingPrompt}<strong>${gamePlayedPortion}</strong>`;
+    ? `${safeStartingPrompt}<strong>${safeGamePlayedPortion}</strong>${safeFormattedCompletion}`
+    : `${safeStartingPrompt}<strong>${safeGamePlayedPortion}</strong>`;
 
   const content = `
     <div class="end-results-section">
@@ -514,7 +526,7 @@ export function createMode2EndScreen(target, success, turns, finalProbability, p
     const nudgeListHTML = nudgeHistory
       .map((nudge, index) => {
         const prob = probabilityHistory[index + 1] || 0;
-        return `<li><strong>Turn ${index + 1}:</strong> "${nudge}" → ${Math.round(prob)}%</li>`;
+        return `<li><strong>Turn ${index + 1}:</strong> "${escapeHtml(nudge)}" → ${Math.round(prob)}%</li>`;
       })
       .join('');
 
@@ -532,9 +544,9 @@ export function createMode2EndScreen(target, success, turns, finalProbability, p
     <div class="end-results-section">
       <h3>Hidden Target</h3>
       <p style="font-size: 1.5rem; font-weight: bold; color: var(--primary-color);">
-        ${target}
+        ${escapeHtml(target)}
       </p>
-      <p>${resultMessage}</p>
+      <p>${escapeHtml(resultMessage)}</p>
     </div>
     ${journeySummary}
     ${nudgeHistoryHTML}

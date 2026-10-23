@@ -15,28 +15,14 @@ function getApiPath() {
 /**
  * Make a request to our Vercel serverless function (which proxies to OpenAI)
  */
-async function makeOpenAIRequest(messages, options = {}) {
-  const requestBody = {
-    messages: messages,
-    temperature: options.temperature !== undefined ? options.temperature : 0.7,
-    max_tokens: options.maxTokens || CONFIG.api.maxTokens
-  };
-
-  // Add logprobs parameters if present
-  if (options.additionalParams?.logprobs) {
-    requestBody.logprobs = options.additionalParams.logprobs;
-  }
-  if (options.additionalParams?.top_logprobs) {
-    requestBody.top_logprobs = options.additionalParams.top_logprobs;
-  }
-
+async function callTask(task, inputs = {}) {
   // Call our serverless function instead of OpenAI directly
   const response = await fetch(getApiPath(), {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json'
     },
-    body: JSON.stringify(requestBody)
+    body: JSON.stringify({ task, ...inputs })
   });
 
   if (!response.ok) {
@@ -80,21 +66,7 @@ export function clearApiKey() {
  */
 export async function getNextTokenDistribution(prompt, logprobs = CONFIG.mode1.logprobCount) {
   try {
-    const messages = [
-      {
-        role: 'user',
-        content: `Continue this sentence with natural text. Only provide the continuation, no explanation: "${prompt}"`
-      }
-    ];
-
-    const response = await makeOpenAIRequest(messages, {
-      temperature: CONFIG.mode1.temperature,
-      maxTokens: 1,  // We only want one token
-      additionalParams: {
-        logprobs: true,
-        top_logprobs: logprobs
-      }
-    });
+    const response = await callTask('nextToken', { prompt });
 
     // Extract logprobs data
     const choice = response.choices[0];
@@ -192,17 +164,7 @@ export async function getNextTokenDistribution(prompt, logprobs = CONFIG.mode1.l
  */
 export async function generateContinuation(prompt, tokens = CONFIG.mode2.silentTokens) {
   try {
-    const messages = [
-      {
-        role: 'user',
-        content: `Continue this narrative naturally: "${prompt}"`
-      }
-    ];
-
-    const response = await makeOpenAIRequest(messages, {
-      temperature: CONFIG.mode2.temperature,
-      maxTokens: tokens
-    });
+    const response = await callTask('continuation', { prompt, tokens });
 
     return response.choices[0].message.content.trim();
   } catch (error) {
@@ -251,22 +213,7 @@ export async function estimateTargetProbability(context, target) {
  */
 async function checkLogprobsForTarget(context, target) {
   try {
-    const messages = [
-      {
-        role: 'user',
-        content: `Continue this narrative: "${context}"`
-      }
-    ];
-
-    // Generate a few tokens and check their logprobs
-    const response = await makeOpenAIRequest(messages, {
-      temperature: CONFIG.mode2.temperature,
-      maxTokens: 5,
-      additionalParams: {
-        logprobs: true,
-        top_logprobs: 20
-      }
-    });
+    const response = await callTask('targetLogprobs', { context, target });
 
     const logprobsData = response.choices[0].logprobs;
 
@@ -311,21 +258,7 @@ async function checkLogprobsForTarget(context, target) {
  */
 async function getLLMProbabilityEstimate(context, target) {
   try {
-    const messages = [
-      {
-        role: 'system',
-        content: 'You are a helpful assistant that estimates probabilities. Respond with only a number between 0 and 100.'
-      },
-      {
-        role: 'user',
-        content: `Given the context below, estimate the probability (0-100) that the concept "${target}" will naturally appear or be implied in the next 20 tokens of the narrative continuation.\n\nContext: "${context}"\n\nRespond with only a number.`
-      }
-    ];
-
-    const response = await makeOpenAIRequest(messages, {
-      temperature: 0.3,
-      maxTokens: 10
-    });
+    const response = await callTask('probabilityEstimate', { context, target });
 
     const content = response.choices[0].message.content.trim();
     const probability = parseFloat(content);
@@ -388,57 +321,12 @@ function generateTargetVariations(target) {
  */
 export async function generateNudgeAnalysis(startingPrompt, nudges, probabilities, target, won) {
   try {
-    // Build the narrative showing how the story evolved
-    let narrative = startingPrompt;
-    const nudgeDetails = nudges.map((nudge, index) => {
-      const prevProb = probabilities[index] || 0;
-      const newProb = probabilities[index + 1] || 0;
-      const change = newProb - prevProb;
-      narrative += ' ' + nudge;
-
-      return `Turn ${index + 1}: "${nudge}" → Probability changed from ${Math.round(prevProb)}% to ${Math.round(newProb)}% (${change > 0 ? '+' : ''}${Math.round(change)}%)`;
-    }).join('\n');
-
-    const messages = [
-      {
-        role: 'system',
-        content: 'You are an expert at analyzing narrative steering and language model behavior. Provide insightful, specific feedback directly to the user about how effectively they steered the narrative toward the target concept. Always use second person (you, your) when addressing the user. Remember: the user did NOT know the target concept at the start - they had to discover it through experimentation and probability feedback.'
-      },
-      {
-        role: 'user',
-        content: `Analyze this attempt to steer an AI narrative toward a HIDDEN target concept.
-
-CRITICAL CONTEXT: The user did NOT know the target "${target}" at the beginning. They had to figure it out by observing how their nudges affected the probability meter. The challenge was to infer the hidden target while simultaneously steering toward it.
-
-Starting prompt: "${startingPrompt}"
-
-The user's nudges and probability feedback:
-${nudgeDetails}
-
-Final narrative: "${narrative}"
-
-${won ? 'The user successfully reached 100% probability and discovered the target!' : `The user reached ${Math.round(probabilities[probabilities.length - 1])}% probability but did not hit 100%.`}
-
-Provide a personalized analysis speaking directly to the user in second person with:
-1. **Overall Strategy**: Assess their detective work and steering approach (2-3 sentences). Consider how well they used probability feedback to infer the target and adapt their strategy. Talk TO them using "you" and "your".
-2. **Most Effective Nudge**: Identify which of their nudges had the biggest positive impact and explain why it worked in moving toward the hidden target. Address them directly.
-3. **Least Effective Nudge**: Identify which nudge was least helpful in the context of discovering and steering toward the unknown target. Explain why. Use second person.
-4. **Key Insight**: One specific learning point about the challenge of steering AI narratives when you don't know the destination. Frame it as something they discovered or should understand.
-5. **Suggestion**: One concrete suggestion for how they could improve their detective work and steering next time. Give direct advice using "you should" or similar.
-
-IMPORTANT:
-- Write the entire analysis in second person, as if you're speaking directly to the user. Use "you", "your", "you're" throughout. Never use "the user" or "they/their" - always address the user directly.
-- Remember they were DISCOVERING the target, not just steering toward a known goal.
-- Praise good detective work when they adapted their nudges based on probability changes.
-- Don't criticize them for "deviating" - they were EXPLORING to figure out what the target was.
-
-Keep the tone encouraging but analytical. Be specific about semantic relationships and why certain words/phrases moved the probability.`
-      }
-    ];
-
-    const response = await makeOpenAIRequest(messages, {
-      temperature: 0.7,
-      maxTokens: 500
+    const response = await callTask('nudgeAnalysis', {
+      startingPrompt,
+      nudges,
+      probabilities,
+      target,
+      won
     });
 
     return response.choices[0].message.content.trim();
@@ -456,16 +344,7 @@ Keep the tone encouraging but analytical. Be specific about semantic relationshi
 export async function testApiConnection() {
   try {
     console.log('Testing API connection...');
-    const messages = [
-      {
-        role: 'user',
-        content: 'Say "OK"'
-      }
-    ];
-
-    await makeOpenAIRequest(messages, {
-      maxTokens: 5
-    });
+    await callTask('ping');
 
     console.log('API connection successful!');
     return { success: true, error: null };
