@@ -2,7 +2,7 @@
 
 import { CONFIG, getRandomPrompt } from './config.js';
 import { getTokenSequence } from './api.js';
-import { chooseTokenOptions, displayToken } from './token-math.js';
+import { chooseTokenOptions, displayToken, groupVisibleAlternatives, isSpacingToken } from './token-math.js';
 import * as ui from './ui.js';
 
 let version = 0;
@@ -42,8 +42,28 @@ export function startGame() {
 async function loadSequence(currentVersion) {
   ui.showLoading();
   try {
-    const frames = await getTokenSequence(gameState.currentPrompt, CONFIG.mode1.rounds);
+    const sequence = await getTokenSequence(gameState.currentPrompt, Math.min(CONFIG.mode1.rounds * 2, 10));
     if (currentVersion !== version) return;
+    const frames = [];
+    let precedingSpaces = '';
+    for (const position of sequence) {
+      if (isSpacingToken(position.chosenToken)) {
+        precedingSpaces += position.chosenToken;
+        continue;
+      }
+      const visible = groupVisibleAlternatives(
+        position.distribution, position.otherProbability, position.chosenToken
+      );
+      frames.push({
+        ...position,
+        ...visible,
+        chosenLabel: displayToken(position.chosenToken),
+        precedingSpaces
+      });
+      precedingSpaces = '';
+      if (frames.length >= CONFIG.mode1.rounds) break;
+    }
+    if (frames.length === 0) throw new Error('The model returned only spacing tokens');
     gameState.frames = frames;
     gameState.maxRounds = frames.length;
     ui.updateScore(0, frames.length);
@@ -70,27 +90,27 @@ async function loadSequence(currentVersion) {
 
 function playRound(currentVersion) {
   const frame = gameState.frames[gameState.currentRound - 1];
-  const options = chooseTokenOptions(frame.distribution, frame.chosenToken);
+  const options = chooseTokenOptions(frame.distribution, frame.chosenLabel);
   ui.createTokenButtons(options, selected => handleTokenSelection(selected, currentVersion));
 }
 
 function handleTokenSelection(selected, currentVersion) {
   if (currentVersion !== version || !gameState.isActive) return;
   const frame = gameState.frames[gameState.currentRound - 1];
-  const isCorrect = selected.token === frame.chosenToken;
+  const isCorrect = selected.token === frame.chosenLabel;
   if (isCorrect) gameState.score++;
   ui.updateScore(gameState.score, gameState.maxRounds);
-  ui.highlightTokenButtons(selected.token, frame.chosenToken);
+  ui.highlightTokenButtons(selected.token, frame.chosenLabel);
   ui.showProbabilityTable(frame.distribution, frame.otherProbability);
 
   // Chat responses normally start without a leading space. Add one visual
   // separator at the prompt/response boundary; later tokens are appended exactly.
-  if (gameState.currentRound === 1 &&
+  if (gameState.currentRound === 1 && !frame.precedingSpaces &&
       /[\p{L}\p{N}]$/u.test(gameState.fullText) &&
       /^[\p{L}\p{N}]/u.test(frame.chosenToken)) {
     gameState.fullText += ' ';
   }
-  gameState.fullText += frame.chosenToken;
+  gameState.fullText += frame.precedingSpaces + frame.chosenToken;
   ui.setCurrentText(gameState.fullText);
 
   const label = displayToken(frame.chosenToken);

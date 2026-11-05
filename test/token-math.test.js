@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readTokenPosition, chooseTokenOptions, displayToken, percentageTenths } from '../js/token-math.js';
+import { readTokenPosition, chooseTokenOptions, displayToken, groupVisibleAlternatives, isSpacingToken, percentageTenths } from '../js/token-math.js';
 
 test('the generated punctuation token remains the answer', () => {
   const frame = readTokenPosition({
@@ -17,18 +17,25 @@ test('the generated punctuation token remains the answer', () => {
   assert.ok(Math.abs(frame.otherProbability - 0.05) < 1e-10);
 });
 
-test('leading spaces are distinct from unspaced tokens', () => {
+test('visible alternatives combine leading-space variants without losing probability', () => {
   const frame = readTokenPosition({
     token: ' a',
     logprob: Math.log(0.5),
     top_logprobs: [
       { token: ' a', logprob: Math.log(0.5) },
-      { token: 'a', logprob: Math.log(0.3) }
+      { token: 'a', logprob: Math.log(0.3) },
+      { token: ' ', logprob: Math.log(0.1) }
     ]
   });
-  assert.equal(frame.distribution.length, 2);
-  assert.equal(displayToken(' a'), '␠a');
+  assert.equal(frame.distribution.length, 3);
+  assert.equal(displayToken(' a'), 'a');
   assert.equal(displayToken('a'), 'a');
+  assert.equal(isSpacingToken(' '), true);
+  const visible = groupVisibleAlternatives(frame.distribution, frame.otherProbability, frame.chosenToken);
+  assert.deepEqual(visible.distribution.map(item => item.token), ['a']);
+  assert.ok(Math.abs(visible.distribution[0].probability - 0.8) < 1e-10);
+  assert.ok(Math.abs(visible.otherProbability - 0.2) < 1e-10);
+  assert.equal(percentageTenths([visible.distribution[0].probability, visible.otherProbability]).reduce((a, b) => a + b), 1000);
 });
 
 test('a sampled token outside the top list is shown separately from other tokens', () => {

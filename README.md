@@ -6,11 +6,11 @@ An interactive app for exploring model tokens and testing how short clues change
 
 ### Mode 1: Guess the Next Token
 
-The server asks `gpt-4o-mini` to continue a starting prompt and requests up to five generated tokens with log probabilities. Each round asks you to identify the token the model actually generated at that position in **the same response**. A token can be a word, a word fragment, punctuation, or whitespace. The game marks spaces as `␠` and newlines as `↵` in choices and tables.
+The server asks `gpt-4o-mini` to continue a starting prompt and requests up to ten generated tokens with log probabilities. Each round asks you to identify the visible text of the token the model actually generated at that position in **the same response**. A token can be a word, a word fragment, or punctuation. Space-only tokens are skipped as rounds. Leading spaces are hidden, and alternatives that differ only by leading spaces share one choice and one probability row.
 
-After each guess, the table shows all alternatives returned by the API for that token position, plus the sampled token if it was outside the returned top list. Each probability is `exp(logprob)`. **All other tokens** is the remaining probability mass. The displayed values are rounded to tenths of a percent and allocated so the table totals 100.0%. The app does not rescale the listed tokens to pretend they are the entire distribution.
+After each guess, the table shows the visible alternatives returned by the API for that token position, plus the sampled token if it was outside the returned top list. Each raw token probability is `exp(logprob)`; probabilities of alternatives with the same visible text are added. **All other tokens** includes the remaining probability mass and any space-only alternatives. The displayed values are rounded to tenths of a percent and allocated so the table totals 100.0%. The app does not rescale the listed tokens to pretend they are the entire distribution. The model's generated choice is labeled only when it is not the highest-probability visible choice.
 
-These likelihoods are conditional on the app's continuation instruction, the prompt, and the tokens already generated. They are not a universal probability for the next word of the starting sentence. The score at the end is simply the fraction of generated tokens you guessed correctly.
+These likelihoods are conditional on the app's continuation instruction, the prompt, and the tokens already generated. They are not a universal probability for the next word of the starting sentence. The score at the end is simply the fraction of visible token choices you guessed correctly.
 
 ### Mode 2: Find the Hidden Concept
 

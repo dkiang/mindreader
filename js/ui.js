@@ -266,13 +266,13 @@ export function showProbabilityTable(distribution, otherProbability) {
     const tokenCell = document.createElement('td');
     tokenCell.textContent = item.other
       ? 'All other tokens'
-      : `${displayToken(item.token)}${item.isChosen ? ' ← generated' : ''}`;
+      : `${displayToken(item.token)}${item.isChosen && index > 0 ? ' ← generated' : ''}`;
 
     const probCell = document.createElement('td');
     probCell.textContent = `${(displayed[index] / 10).toFixed(1)}%`;
 
     const rankCell = document.createElement('td');
-    rankCell.textContent = item.other ? '—' : item.sampledOutsideTop ? 'outside top list' : `#${item.rank}`;
+    rankCell.textContent = item.other ? '—' : `#${item.rank}`;
 
     row.appendChild(tokenCell);
     row.appendChild(probCell);
@@ -389,8 +389,8 @@ export function hideSummaryModal() {
 export function showMode1Introduction(onDismiss) {
   elements.introTitle.textContent = 'Welcome to Mode 1';
   elements.introText.innerHTML = `
-    <p>The model continues the displayed prompt. Guess each generated token from one response, up to four choices per step. A token can be a word, part of a word, punctuation, or a space.</p>
-    <p>After each guess, you'll see the model's likelihoods for the returned alternatives. The table groups every unlisted possibility under “All other tokens.”</p>
+    <p>The model continues the displayed prompt. Guess each visible token from one response, up to four choices per step. A token can be a word, part of a word, or punctuation. Spaces between tokens are assumed.</p>
+    <p>After each guess, you'll see the model's likelihoods for the returned alternatives. Tokens that differ only by a leading space share one row. The table groups every unlisted possibility under “All other tokens.”</p>
   `;
 
   // Set up dismiss button handler
@@ -447,7 +447,7 @@ export function createMode1EndScreen(score, total, startingPrompt, gameText) {
       <p style="font-size: 2rem; font-weight: bold; color: var(--primary-color);">
         ${score} / ${total} (${percentage}%)
       </p>
-      <p>This is the share of tokens you guessed in this one model response.</p>
+      <p>This is the share of visible tokens you guessed in this one model response.</p>
     </div>
     <div class="end-results-section">
       <h3>Generated Text</h3>

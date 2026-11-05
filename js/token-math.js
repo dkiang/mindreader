@@ -2,10 +2,36 @@
 
 export function displayToken(token) {
   return token
-    .replace(/ /g, '␠')
+    .replace(/^ +/, '')
     .replace(/\t/g, '⇥')
     .replace(/\r/g, '␍')
     .replace(/\n/g, '↵');
+}
+
+export function isSpacingToken(token) {
+  return /^ +$/.test(token);
+}
+
+/** Combine tokens that differ only by assumed leading spaces. */
+export function groupVisibleAlternatives(distribution, otherProbability, chosenToken) {
+  const groups = new Map();
+  let hiddenProbability = otherProbability;
+
+  for (const item of distribution) {
+    if (isSpacingToken(item.token)) {
+      hiddenProbability += item.probability;
+      continue;
+    }
+    const label = displayToken(item.token);
+    const group = groups.get(label) || { token: label, probability: 0, isChosen: false };
+    group.probability += item.probability;
+    group.isChosen ||= item.token === chosenToken;
+    groups.set(label, group);
+  }
+
+  const visible = [...groups.values()].sort((a, b) => b.probability - a.probability);
+  visible.forEach((item, index) => { item.rank = index + 1; });
+  return { distribution: visible, otherProbability: hiddenProbability };
 }
 
 export function readTokenPosition(position) {
