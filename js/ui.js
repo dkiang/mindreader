@@ -437,6 +437,7 @@ export function hideIntroModal() {
  */
 export function createMode1EndScreen(score, total, startingPrompt, gameText) {
   const percentage = Math.round((score / total) * 100);
+  const robotMessage = score > 3 ? 'You are probably not a robot.' : 'You are not a robot.';
   const gamePlayedPortion = gameText.substring(startingPrompt.length);
   const safeStartingPrompt = escapeHtml(startingPrompt);
   const safeGamePlayedPortion = escapeHtml(gamePlayedPortion);
@@ -447,6 +448,7 @@ export function createMode1EndScreen(score, total, startingPrompt, gameText) {
       <p style="font-size: 2rem; font-weight: bold; color: var(--primary-color);">
         ${score} / ${total} (${percentage}%)
       </p>
+      <p>${robotMessage}</p>
       <p>This is the share of visible tokens you guessed in this one model response.</p>
     </div>
     <div class="end-results-section">
