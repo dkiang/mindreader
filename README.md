@@ -1,183 +1,35 @@
-# MINDREADER - Next-Token Prediction Simulator
+# MINDREADER
 
-An interactive web application that teaches users how language models predict and select next tokens in text sequences. Built with vanilla HTML, CSS, and JavaScript.
+An interactive app for exploring model tokens and testing how short clues change a model's rating of a story prompt.
 
-## Features
-
-### Mode 1: "Guess the Next Token"
-- Predict which token an AI is most likely to choose next
-- See real probability distributions from the language model
-- Learn how AI favors common, safe continuations
-- Track your score across multiple rounds
-
-### Mode 2: "Steer the Hidden Narrative"
-- Try to guide an AI narrative toward a hidden target concept
-- Insert "nudges" to influence the model's direction
-- Watch the probability meter respond to your inputs
-- Experience how difficult it is to steer AI without explicit signals
-
-## Quick Start
-
-### For Educators (Recommended)
-
-**Deploy to Vercel with Secure API Key Management:** 
-
-1. Get an OpenAI API key at https://platform.openai.com/api-keys
-2. Follow the comprehensive **[Deployment Guide](DEPLOYMENT.md)** to deploy to Vercel
-3. Share the deployed URL with your students
-4. Students can use the app without needing their own API keys! 🎉
-
-This approach keeps your API key secure on the server side and allows all students to access the app. 
-
-### For Local Development/Testing
-
-1. Clone or download this repository
-2. Serve the files using a local HTTP server (required for ES6 modules):
-   ```bash
-   python3 -m http.server 8000
-   ```
-3. Open `http://localhost:8000` in your browser
-4. For testing, you'll need to temporarily add API key handling back (see DEPLOYMENT.md)
-
-## Project Structure
-
-```
-mindreader/
-├── index.html          # Main HTML file
-├── api/
-│   └── chat.js         # Vercel serverless function (proxies to OpenAI)
-├── css/
-│   └── styles.css      # All styling (mobile-first, responsive)
-├── js/
-│   ├── main.js         # App initialization and coordination
-│   ├── config.js       # Configuration constants
-│   ├── api.js          # Frontend API calls (calls /api/chat)
-│   ├── ui.js           # DOM manipulation helpers
-│   ├── mode1.js        # "Guess the Next Token" game logic
-│   └── mode2.js        # "Steer the Hidden Narrative" game logic
-├── vercel.json         # Vercel deployment configuration
-├── .env.example        # Example environment variables
-├── DEPLOYMENT.md       # Comprehensive deployment guide
-└── README.md           # This file
-```
-
-## Configuration
-
-You can customize game settings in `js/config.js`:
-
-### Mode 1 Settings
-- `rounds`: Number of rounds per game (default: 5)
-- `logprobCount`: Number of token probabilities to fetch (default: 10)
-- `temperature`: AI temperature setting (default: 0.2)
-
-### Mode 2 Settings
-- `maxTurns`: Maximum number of nudge attempts (default: 10)
-- `maxNudgeWords`: Maximum words per nudge (default: 6)
-- `targets`: List of possible hidden target concepts
-
-### API Settings
-The serverless API uses `gpt-4o-mini`. Change `MODEL` in `api/chat.js` to use a different supported model.
-
-## Usage
+## What the numbers mean
 
 ### Mode 1: Guess the Next Token
-1. Click "Start Game"
-2. Read the text fragment
-3. Choose which token you think the AI will select
-4. See if you were correct and view the probability distribution
-5. Continue for 5 rounds
-6. Review your score and insights
 
-### Mode 2: Steer the Hidden Narrative
-1. Click "Start Game"
-2. Try to infer what the hidden target concept might be
-3. Type short nudges (max 6 words) to steer the narrative
-4. Watch the probability meter respond
-5. Try to reach 100% probability within 10 turns
-6. See the hidden target and review your approach
+The server asks `gpt-4o-mini` to continue a starting prompt and requests up to five generated tokens with log probabilities. Each round asks you to identify the token the model actually generated at that position in **the same response**. A token can be a word, a word fragment, punctuation, or whitespace. The game marks spaces as `␠` and newlines as `↵` in choices and tables.
 
-## Educational Objectives
+After each guess, the table shows all alternatives returned by the API for that token position, plus the sampled token if it was outside the returned top list. Each probability is `exp(logprob)`. **All other tokens** is the remaining probability mass. The displayed values are rounded to tenths of a percent and allocated so the table totals 100.0%. The app does not rescale the listed tokens to pretend they are the entire distribution.
 
-This tool helps users understand:
-- How language models predict text token-by-token
-- Why LLMs favor high-frequency, safe continuations
-- The difficulty of steering AI outputs without explicit signals
-- Probability distributions and model "momentum"
-- Token-level prediction vs. high-level concepts
+These likelihoods are conditional on the app's continuation instruction, the prompt, and the tokens already generated. They are not a universal probability for the next word of the starting sentence. The score at the end is simply the fraction of generated tokens you guessed correctly.
 
-## API Costs
+### Mode 2: Find the Hidden Concept
 
-This application makes API calls to OpenAI for each interaction:
-- Mode 1: ~5-10 calls per game (one per round)
-- Mode 2: ~10-20 calls per game (initial + each nudge)
+The app chooses a concept, shows a starting passage, and lets you add up to ten short nudges. After a baseline rating and each nudge, the model gives a **fit score from 0 to 100** for how strongly the passage points toward the concept. This is a subjective model rating, **not a measured probability** that the concept will appear in a future continuation. The scores across turns are independent ratings and do not add to 100.
 
-Using GPT-3.5-turbo, each game typically costs less than $0.01. Monitor your usage at https://platform.openai.com/usage.
+The app does not secretly generate a narrative. The displayed passage consists of the starting prompt and your nudges. Typing the exact hidden concept in a nudge wins; otherwise the concept is revealed after ten turns or when you end the game. Scores can vary between model calls, so a change does not prove that a nudge caused it. The target is hidden from the normal interface, though it is sent to the server for scoring and is not protected against browser inspection.
 
-## Browser Compatibility
+## Running the app
 
-- Chrome 90+
-- Firefox 88+
-- Safari 14+
-- Edge 90+
+The static frontend calls a Vercel serverless function at `api/chat`. Configure `OPENAI_API_KEY` in the Vercel project and deploy the repository. The key stays on the server; users do not enter one. See [DEPLOYMENT.md](DEPLOYMENT.md) for deployment steps.
 
-## Security Notes
+For local testing, install dependencies and use `vercel dev` with a development `OPENAI_API_KEY`. A plain static file server cannot run `api/chat`.
 
-✅ **Secure Architecture:** This application uses Vercel serverless functions to keep your API key secure on the server side. Students never see or handle the API key.
+## Configuration and usage
 
-**Security Features:**
-- API key stored as Vercel environment variable (server-side only)
-- No API key in frontend code or browser
-- HTTPS encryption by default
-- Optional rate limiting and access codes (see DEPLOYMENT.md)
+- Starting prompts, round count, target concepts, and nudge limit are in `js/config.js`.
+- The model and request parameters are in `api/chat.js`. Mode 1 requests 10 alternative tokens per position and uses temperature 0.
+- Mode 1 makes one model call per game. Mode 2 makes one call for the baseline, one per submitted nudge, and one optional analysis call at the end. Check the OpenAI Usage Dashboard for actual costs.
 
-For production deployment, see **[DEPLOYMENT.md](DEPLOYMENT.md)** for additional security options like rate limiting and access codes.
+## Source of token probabilities
 
-## Troubleshooting
-
-### "Server configuration error"
-- Ensure `OPENAI_API_KEY` environment variable is set in Vercel
-- Check that the key is valid and starts with "sk-"
-- Redeploy after adding/updating environment variables
-
-### "Invalid API key" or "API Error"
-- Verify your OpenAI API key in Vercel environment variables
-- Check that your key is active at https://platform.openai.com/api-keys
-- Ensure you have available API credits
-- Check Vercel function logs for detailed error messages
-
-### "Rate limit reached" error
-- OpenAI rate limit reached - wait a few moments
-- Check your rate limits at https://platform.openai.com/account/limits
-- Consider implementing rate limiting (see DEPLOYMENT.md)
-
-### Slow responses
-- Consider using GPT-3.5-turbo instead of GPT-4 for faster responses
-- Check your internet connection
-- Check Vercel function performance in dashboard
-
-### UI not loading
-- Ensure JavaScript is enabled in your browser
-- Check the browser console for errors (F12)
-- Verify deployment succeeded in Vercel dashboard
-
-## Future Enhancements
-
-Potential additions (not in current version):
-- Dark mode
-- Teacher dashboard with aggregated results
-- Shareable challenge links
-- Session export to JSON
-- Free play mode with real-time probability display
-- Advanced rate limiting with Redis/Vercel KV
-
-## License
-
-MIT License - Feel free to use and modify for educational purposes.
-
-## Contributing
-
-This is an educational project. Contributions, suggestions, and feedback are welcome!
-
-## Acknowledgments
-
-Built following vanilla JavaScript best practices with ES6 modules. No frameworks or dependencies required.
+The [OpenAI Chat Completions API reference](https://developers.openai.com/api/reference/resources/chat/subresources/completions/methods/create) describes `logprobs`, `top_logprobs`, the generated token, and the fact that fewer alternatives than requested may be returned.

@@ -442,6 +442,12 @@ body {
     color: var(--text-color);
 }
 
+.probability-explanation {
+    margin: 0 0 var(--spacing-sm);
+    color: #555;
+    font-size: var(--font-size-sm);
+}
+
 .probability-table {
     width: 100%;
     border-collapse: collapse;

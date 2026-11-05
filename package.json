@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "Next-Token Prediction Simulator - An interactive tool to learn how language models predict text",
   "type": "module",
+  "scripts": {
+    "test": "node --test"
+  },
   "dependencies": {
     "@upstash/ratelimit": "^2.0.5",
     "@upstash/redis": "^1.35.3",

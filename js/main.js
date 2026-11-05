@@ -89,7 +89,7 @@ function switchMode(mode) {
     ui.show('startControls');
 
   } else if (mode === 'mode2') {
-    // Mode 2: Steer the Hidden Narrative
+    // Mode 2: Find the Hidden Concept
     elements.mode2Btn.classList.add('active');
     elements.mode1Btn.classList.remove('active');
 

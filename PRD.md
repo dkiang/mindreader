@@ -1,5 +1,7 @@
 # **Product Requirements Document (PRD)**  
 ## **Project: MINDREADER — Next-Token Prediction Simulator**  
+
+> Historical design proposal. The current implementation is documented in [README.md](README.md). In particular, Mode 1 now uses actual generated tokens from one response and includes the unlisted probability mass. Mode 2 displays a subjective target-fit score; it does not generate a silent narrative or measure the probability of a future concept.
 **Tech Stack:** HTML, CSS, Vanilla JavaScript  
 **Platforms:** Web, fully mobile-responsive  
 **LLM API:** Must support logprobs (per-token probability distributions)

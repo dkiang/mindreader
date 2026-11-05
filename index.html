@@ -21,7 +21,7 @@
                     Guess the Next Token
                 </button>
                 <button id="mode2-btn" class="mode-btn" data-mode="mode2">
-                    Steer the Hidden Narrative
+                    Find the Hidden Concept
                 </button>
             </div>
         </header>
@@ -78,7 +78,8 @@
             <section id="feedback-area" class="feedback-area">
                 <!-- Mode 1: Probability Table -->
                 <div id="probability-display" class="probability-display hidden">
-                    <h3>Token Probabilities</h3>
+                    <h3>Next-token alternatives</h3>
+                    <p class="probability-explanation">These are the model's token likelihoods at this step. ␠ means a space and ↵ means a new line. All other tokens completes the distribution; displayed values are rounded to total 100.0%.</p>
                     <table id="probability-table" class="probability-table">
                         <thead>
                             <tr>
@@ -95,12 +96,13 @@
 
                 <!-- Mode 2: Visual Feedback System -->
                 <div id="probability-meter-container" class="probability-meter-container hidden">
-                    <h3>Target Probability</h3>
+                    <h3>AI Target Fit Score</h3>
+                    <p class="probability-explanation">A model rates how strongly your passage points to the hidden concept, from 0 to 100. This is a subjective score, not a probability.</p>
 
                     <!-- Trajectory Sparkline Chart -->
-                    <div id="trajectory-sparkline" class="trajectory-sparkline" role="img" aria-label="Probability trajectory chart">
+                    <div id="trajectory-sparkline" class="trajectory-sparkline" role="img" aria-label="Fit score trajectory chart">
                         <svg id="trajectory-svg" class="trajectory-svg" viewBox="0 0 600 100" preserveAspectRatio="xMidYMid meet">
-                            <!-- Target line at 100% -->
+                            <!-- Maximum fit score -->
                             <line class="target-line" x1="0" y1="10" x2="600" y2="10" stroke-dasharray="4,4" />
                             <!-- Path will be dynamically generated -->
                             <path id="trajectory-path" class="trajectory-path" d="" fill="none" />
@@ -123,7 +125,7 @@
 
                     <!-- Current Probability and Feedback Indicator -->
                     <div id="probability-status" class="probability-status">
-                        <span id="probability-current-text" class="probability-current-text">Current: 0%</span>
+                        <span id="probability-current-text" class="probability-current-text">Fit score: —</span>
                         <span id="feedback-indicator" class="feedback-indicator" role="status" aria-live="polite"></span>
                     </div>
                 </div>

@@ -2,7 +2,7 @@
  * UI Module - DOM manipulation and UI helpers
  */
 
-import { CONFIG, formatProbability } from './config.js';
+import { displayToken, percentageTenths } from './token-math.js';
 
 // DOM Element Cache
 const elements = {};
@@ -42,8 +42,6 @@ export function initUI() {
   elements.probabilityTable = document.getElementById('probability-table');
   elements.probabilityTableBody = document.getElementById('probability-table-body');
   elements.probabilityMeterContainer = document.getElementById('probability-meter-container');
-  elements.probabilityMeterFill = document.getElementById('probability-meter-fill');
-  elements.probabilityMeterText = document.getElementById('probability-meter-text');
   elements.feedbackMessage = document.getElementById('feedback-message');
   elements.scoreDisplay = document.getElementById('score-display');
   elements.roundDisplay = document.getElementById('round-display');
@@ -207,7 +205,7 @@ export function createTokenButtons(tokens, onSelect) {
   tokens.forEach((tokenObj) => {
     const button = document.createElement('button');
     button.className = 'token-btn';
-    button.textContent = tokenObj.token;
+    button.textContent = displayToken(tokenObj.token);
     button.dataset.token = tokenObj.token;
     button.dataset.rank = tokenObj.rank;
 
@@ -256,20 +254,25 @@ export function highlightTokenButtons(selectedToken, correctToken) {
  * Display probability table (Mode 1)
  * @param {Array} distribution - Array of {token, probability, rank}
  */
-export function showProbabilityTable(distribution) {
+export function showProbabilityTable(distribution, otherProbability) {
   elements.probabilityTableBody.innerHTML = '';
 
-  distribution.forEach((item) => {
+  const rows = [...distribution, { other: true, probability: otherProbability }];
+  const displayed = percentageTenths(rows.map(item => item.probability));
+
+  rows.forEach((item, index) => {
     const row = document.createElement('tr');
 
     const tokenCell = document.createElement('td');
-    tokenCell.textContent = item.token;
+    tokenCell.textContent = item.other
+      ? 'All other tokens'
+      : `${displayToken(item.token)}${item.isChosen ? ' ← generated' : ''}`;
 
     const probCell = document.createElement('td');
-    probCell.textContent = formatProbability(item.probability);
+    probCell.textContent = `${(displayed[index] / 10).toFixed(1)}%`;
 
     const rankCell = document.createElement('td');
-    rankCell.textContent = `#${item.rank}`;
+    rankCell.textContent = item.other ? '—' : item.sampledOutsideTop ? 'outside top list' : `#${item.rank}`;
 
     row.appendChild(tokenCell);
     row.appendChild(probCell);
@@ -283,16 +286,6 @@ export function showProbabilityTable(distribution) {
 
 export function hideProbabilityTable() {
   hide(elements.probabilityDisplay);
-}
-
-/**
- * Update probability meter (Mode 2)
- * @param {number} probability - Probability from 0 to 100
- */
-export function updateProbabilityMeter(probability) {
-  const clamped = Math.max(0, Math.min(100, probability));
-  elements.probabilityMeterFill.style.width = `${clamped}%`;
-  elements.probabilityMeterText.textContent = `${Math.round(clamped)}%`;
 }
 
 export function showProbabilityMeter() {
@@ -396,8 +389,8 @@ export function hideSummaryModal() {
 export function showMode1Introduction(onDismiss) {
   elements.introTitle.textContent = 'Welcome to Mode 1';
   elements.introText.innerHTML = `
-    <p>In this mode, you'll see the beginning of a paragraph that's being generated live by an AI. At each step, the AI knows the most statistically likely next word—and your job is to guess which one it will choose.</p>
-    <p>You're trying to think like the model: predictable, literal, and probability-driven. See how often you match it.</p>
+    <p>The model continues the displayed prompt. Guess each generated token from one response, up to four choices per step. A token can be a word, part of a word, punctuation, or a space.</p>
+    <p>After each guess, you'll see the model's likelihoods for the returned alternatives. The table groups every unlisted possibility under “All other tokens.”</p>
   `;
 
   // Set up dismiss button handler
@@ -417,8 +410,8 @@ export function showMode1Introduction(onDismiss) {
 export function showMode2Introduction(onDismiss) {
   elements.introTitle.textContent = 'Welcome to Mode 2';
   elements.introText.innerHTML = `
-    <p>Here, an AI will generate a paragraph silently in the background. A hidden target concept has already been chosen. Your job is to influence the story by adding short "nudges" to the text and watching how they affect the probability meter.</p>
-    <p>Use minimal hints to try to push the narrative toward the target—even though you don't know what it is at first.</p>
+    <p>Add short nudges to the displayed passage. An AI judge rates how strongly the passage points toward a hidden concept, from 0 to 100. This fit score is a subjective rating, not a probability.</p>
+    <p>Use the score changes as clues. Type the exact hidden concept in a nudge to win, or reveal it after ten turns.</p>
   `;
 
   // Set up dismiss button handler
@@ -442,39 +435,11 @@ export function hideIntroModal() {
 /**
  * Create end screen content for Mode 1
  */
-export function createMode1EndScreen(score, total, startingPrompt, gameText, completion) {
+export function createMode1EndScreen(score, total, startingPrompt, gameText) {
   const percentage = Math.round((score / total) * 100);
-
-  let message = '';
-  if (percentage >= 80) {
-    message = "Excellent! You have a great understanding of how AI predicts text.";
-  } else if (percentage >= 60) {
-    message = "Good job! You're getting the hang of AI predictions.";
-  } else if (percentage >= 40) {
-    message = "Not bad! AI predictions can be tricky.";
-  } else {
-    message = "Keep learning! AI often chooses the most common, safest options.";
-  }
-
-  // Format the complete sentence with the game portion highlighted
-  // The starting prompt is shown, then the game portion in bold, then the completion
   const gamePlayedPortion = gameText.substring(startingPrompt.length);
-
-  // Ensure there's a space before the completion text
-  let formattedCompletion = '';
-  if (completion) {
-    // Add a space before completion if it doesn't start with one or punctuation
-    formattedCompletion = (completion.startsWith(' ') || /^[.,!?;:]/.test(completion))
-      ? completion
-      : ' ' + completion;
-  }
-
   const safeStartingPrompt = escapeHtml(startingPrompt);
   const safeGamePlayedPortion = escapeHtml(gamePlayedPortion);
-  const safeFormattedCompletion = escapeHtml(formattedCompletion);
-  const completeSentence = formattedCompletion
-    ? `${safeStartingPrompt}<strong>${safeGamePlayedPortion}</strong>${safeFormattedCompletion}`
-    : `${safeStartingPrompt}<strong>${safeGamePlayedPortion}</strong>`;
 
   const content = `
     <div class="end-results-section">
@@ -482,23 +447,23 @@ export function createMode1EndScreen(score, total, startingPrompt, gameText, com
       <p style="font-size: 2rem; font-weight: bold; color: var(--primary-color);">
         ${score} / ${total} (${percentage}%)
       </p>
-      <p>${message}</p>
+      <p>This is the share of tokens you guessed in this one model response.</p>
     </div>
     <div class="end-results-section">
-      <h3>Complete Sentence</h3>
+      <h3>Generated Text</h3>
       <p style="font-style: italic; line-height: 1.8; font-size: 1.1rem;">
-        "${completeSentence}"
+        “${safeStartingPrompt}<strong>${safeGamePlayedPortion}</strong>”
       </p>
       <p style="font-size: 0.9rem; color: #666; margin-top: 8px;">
-        <strong>Bold text</strong> shows the tokens you played during the game.
+        <strong>Bold text</strong> shows the generated tokens you played. A space may be added at the prompt boundary for readability.
       </p>
     </div>
     <div class="end-results-section">
       <h3>Key Insights</h3>
       <ul style="text-align: left; padding-left: 20px;">
-        <li>Language models predict the most probable next token based on patterns in their training data.</li>
-        <li>They tend to favor common, safe continuations over creative or unusual ones.</li>
-        <li>Understanding these patterns helps us work more effectively with AI.</li>
+        <li>Each table describes one token position in the model's response to the prompt.</li>
+        <li>Returned alternatives and “All other tokens” together cover 100% of that position's likelihood.</li>
+        <li>Tokens are not necessarily whole words.</li>
       </ul>
     </div>
   `;
@@ -512,21 +477,21 @@ export function createMode1EndScreen(score, total, startingPrompt, gameText, com
 /**
  * Create end screen content for Mode 2 with AI analysis placeholder
  */
-export function createMode2EndScreen(target, success, turns, finalProbability, probabilityHistory, nudgeHistory) {
+export function createMode2EndScreen(target, success, turns, finalScore, scoreHistory, nudgeHistory) {
   const resultMessage = success
-    ? `Success! You successfully steered the narrative toward "${target}" in ${turns} turns.`
-    : `The hidden target was "${target}". You reached ${Math.round(finalProbability)}% probability in ${turns} turns.`;
+    ? `You found the exact hidden concept in ${turns} turns.`
+    : `The hidden concept was “${target}”. Your final fit score was ${finalScore}/100 after ${turns} turns.`;
 
   // Create journey summary
-  let journeySummary = createJourneySummary(probabilityHistory, nudgeHistory);
+  let journeySummary = createJourneySummary(scoreHistory);
 
   // Add nudge history
   let nudgeHistoryHTML = '';
   if (nudgeHistory.length > 0) {
     const nudgeListHTML = nudgeHistory
       .map((nudge, index) => {
-        const prob = probabilityHistory[index + 1] || 0;
-        return `<li><strong>Turn ${index + 1}:</strong> "${escapeHtml(nudge)}" → ${Math.round(prob)}%</li>`;
+        const score = scoreHistory[index + 1];
+        return `<li><strong>Turn ${index + 1}:</strong> “${escapeHtml(nudge)}” → ${score}/100 fit score</li>`;
       })
       .join('');
 
@@ -547,11 +512,12 @@ export function createMode2EndScreen(target, success, turns, finalProbability, p
         ${escapeHtml(target)}
       </p>
       <p>${escapeHtml(resultMessage)}</p>
+      <p>The fit score is an AI judgment of this passage. It is not a measured chance of the concept appearing.</p>
     </div>
     ${journeySummary}
     ${nudgeHistoryHTML}
     <div class="end-results-section ai-analysis-section">
-      <h3>📊 AI-Powered Analysis</h3>
+      <h3>AI Feedback</h3>
       <div id="ai-analysis-content-endscreen" class="ai-analysis-content">
         <div class="loading-analysis">
           <div class="spinner-small"></div>
@@ -717,8 +683,13 @@ export function initMode2Visualizations(maxTurns) {
   // Reset probability status
   const probabilityCurrentText = document.getElementById('probability-current-text');
   const feedbackIndicator = document.getElementById('feedback-indicator');
-  if (probabilityCurrentText) probabilityCurrentText.textContent = 'Current: 0%';
+  if (probabilityCurrentText) probabilityCurrentText.textContent = 'Fit score: —';
   if (feedbackIndicator) feedbackIndicator.textContent = '';
+}
+
+export function updateCurrentFitScore(score) {
+  const currentText = document.getElementById('probability-current-text');
+  if (currentText) currentText.textContent = `Fit score: ${score}/100`;
 }
 
 /**
@@ -779,7 +750,7 @@ export function updateTrajectorySparkline(probabilityHistory) {
 
     // Add tooltip
     const title = document.createElementNS('http://www.w3.org/2000/svg', 'title');
-    title.textContent = `Turn ${index}: ${Math.round(point.prob)}%`;
+    title.textContent = `Turn ${index}: fit score ${Math.round(point.prob)}/100`;
     circle.appendChild(title);
 
     trajectoryPoints.appendChild(circle);
@@ -800,8 +771,8 @@ export function addPathSegment(turnNumber, probability, change) {
   segment.className = 'path-segment';
   segment.dataset.turn = turnNumber;
   segment.dataset.range = getProbabilityRange(probability);
-  segment.textContent = `${Math.round(probability)}%`;
-  segment.setAttribute('title', `Turn ${turnNumber}: ${Math.round(probability)}%`);
+  segment.textContent = `${Math.round(probability)}/100`;
+  segment.setAttribute('title', `Turn ${turnNumber}: fit score ${Math.round(probability)}/100`);
 
   // Add animation based on change
   if (change >= 15) {
@@ -832,7 +803,7 @@ export function updateVisualFeedback(change, currentProbability) {
 
   // Update current probability text
   if (probabilityCurrentText) {
-    probabilityCurrentText.textContent = `Current: ${Math.round(currentProbability)}%`;
+    probabilityCurrentText.textContent = `Fit score: ${Math.round(currentProbability)}/100`;
   }
 
   // Clear previous feedback
@@ -845,29 +816,29 @@ export function updateVisualFeedback(change, currentProbability) {
 
   if (change >= 15) {
     icon = '↑↑';
-    text = `+${Math.round(change)}%`;
+    text = `+${Math.round(change)} points`;
     feedbackClass = 'strong-increase';
-    feedbackIndicator.setAttribute('aria-label', `Strong increase: ${Math.round(change)} percentage points`);
+    feedbackIndicator.setAttribute('aria-label', `Strong increase: ${Math.round(change)} score points`);
   } else if (change >= 5) {
     icon = '↑';
-    text = `+${Math.round(change)}%`;
+    text = `+${Math.round(change)} points`;
     feedbackClass = 'small-increase';
-    feedbackIndicator.setAttribute('aria-label', `Small increase: ${Math.round(change)} percentage points`);
+    feedbackIndicator.setAttribute('aria-label', `Small increase: ${Math.round(change)} score points`);
   } else if (change <= -15) {
     icon = '↓↓';
-    text = `${Math.round(change)}%`;
+    text = `${Math.round(change)} points`;
     feedbackClass = 'strong-decrease';
-    feedbackIndicator.setAttribute('aria-label', `Strong decrease: ${Math.round(change)} percentage points`);
+    feedbackIndicator.setAttribute('aria-label', `Strong decrease: ${Math.round(change)} score points`);
   } else if (change <= -5) {
     icon = '↓';
-    text = `${Math.round(change)}%`;
+    text = `${Math.round(change)} points`;
     feedbackClass = 'small-decrease';
-    feedbackIndicator.setAttribute('aria-label', `Small decrease: ${Math.round(change)} percentage points`);
+    feedbackIndicator.setAttribute('aria-label', `Small decrease: ${Math.round(change)} score points`);
   } else {
     icon = '→';
-    text = `${Math.round(change)}%`;
+    text = `${Math.round(change)} points`;
     feedbackClass = 'neutral';
-    feedbackIndicator.setAttribute('aria-label', `Minimal change: ${Math.round(change)} percentage points`);
+    feedbackIndicator.setAttribute('aria-label', `Minimal change: ${Math.round(change)} score points`);
   }
 
   feedbackIndicator.textContent = `${icon} ${text}`;
@@ -877,18 +848,18 @@ export function updateVisualFeedback(change, currentProbability) {
 /**
  * Create journey summary for end screen
  */
-export function createJourneySummary(probabilityHistory, nudgeHistory) {
-  if (probabilityHistory.length === 0) return '';
+export function createJourneySummary(scoreHistory) {
+  if (scoreHistory.length === 0) return '';
 
-  const startingProb = probabilityHistory[0];
-  const finalProb = probabilityHistory[probabilityHistory.length - 1];
-  const peakProb = Math.max(...probabilityHistory);
+  const startingScore = scoreHistory[0];
+  const finalScore = scoreHistory[scoreHistory.length - 1];
+  const peakScore = Math.max(...scoreHistory);
 
   // Find biggest jump
   let biggestJump = 0;
   let biggestJumpTurn = 0;
-  for (let i = 1; i < probabilityHistory.length; i++) {
-    const change = probabilityHistory[i] - probabilityHistory[i - 1];
+  for (let i = 1; i < scoreHistory.length; i++) {
+    const change = scoreHistory[i] - scoreHistory[i - 1];
     if (Math.abs(change) > Math.abs(biggestJump)) {
       biggestJump = change;
       biggestJumpTurn = i;
@@ -898,8 +869,8 @@ export function createJourneySummary(probabilityHistory, nudgeHistory) {
   // Count increases vs decreases
   let increases = 0;
   let decreases = 0;
-  for (let i = 1; i < probabilityHistory.length; i++) {
-    const change = probabilityHistory[i] - probabilityHistory[i - 1];
+  for (let i = 1; i < scoreHistory.length; i++) {
+    const change = scoreHistory[i] - scoreHistory[i - 1];
     if (change > 0) increases++;
     else if (change < 0) decreases++;
   }
@@ -909,20 +880,20 @@ export function createJourneySummary(probabilityHistory, nudgeHistory) {
       <h4>Journey Summary</h4>
       <div class="journey-stats">
         <div class="journey-stat">
-          <div class="journey-stat-value">${Math.round(startingProb)}%</div>
-          <div class="journey-stat-label">Starting</div>
+          <div class="journey-stat-value">${startingScore}/100</div>
+          <div class="journey-stat-label">Starting fit</div>
         </div>
         <div class="journey-stat">
-          <div class="journey-stat-value">${Math.round(peakProb)}%</div>
-          <div class="journey-stat-label">Peak</div>
+          <div class="journey-stat-value">${peakScore}/100</div>
+          <div class="journey-stat-label">Peak fit</div>
         </div>
         <div class="journey-stat">
-          <div class="journey-stat-value">${Math.round(finalProb)}%</div>
-          <div class="journey-stat-label">Final</div>
+          <div class="journey-stat-value">${finalScore}/100</div>
+          <div class="journey-stat-label">Final fit</div>
         </div>
         <div class="journey-stat">
-          <div class="journey-stat-value">${biggestJump > 0 ? '+' : ''}${Math.round(biggestJump)}%</div>
-          <div class="journey-stat-label">Biggest Jump (Turn ${biggestJumpTurn})</div>
+          <div class="journey-stat-value">${biggestJumpTurn ? `${biggestJump > 0 ? '+' : ''}${Math.round(biggestJump)} points` : '—'}</div>
+          <div class="journey-stat-label">${biggestJumpTurn ? `Biggest change (turn ${biggestJumpTurn})` : 'No nudges yet'}</div>
         </div>
         <div class="journey-stat">
           <div class="journey-stat-value">${increases} / ${decreases}</div>
@@ -932,9 +903,9 @@ export function createJourneySummary(probabilityHistory, nudgeHistory) {
       <div class="journey-path-display">
         <h4>Your Path</h4>
         <div class="path-segments">
-          ${probabilityHistory.slice(1).map((prob, index) => `
-            <div class="path-segment" data-range="${getProbabilityRange(prob)}" title="Turn ${index + 1}: ${Math.round(prob)}%">
-              ${Math.round(prob)}%
+          ${scoreHistory.slice(1).map((score, index) => `
+            <div class="path-segment" data-range="${getProbabilityRange(score)}" title="Turn ${index + 1}: fit score ${score}/100">
+              ${score}/100
             </div>
           `).join('')}
         </div>
