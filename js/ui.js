@@ -26,6 +26,9 @@ export function initUI() {
   elements.mode2Btn = document.getElementById('mode2-btn');
 
   elements.currentText = document.getElementById('current-text');
+  elements.storyGoal = document.getElementById('story-goal');
+  elements.storyReaction = document.getElementById('story-reaction');
+  elements.storyReactionText = document.getElementById('story-reaction-text');
   elements.interactionArea = document.getElementById('interaction-area');
   elements.mode1Controls = document.getElementById('mode1-controls');
   elements.mode2Controls = document.getElementById('mode2-controls');
@@ -34,6 +37,8 @@ export function initUI() {
 
   elements.tokenButtons = document.getElementById('token-buttons');
   elements.nudgeInput = document.getElementById('nudge-input');
+  elements.mode2Target = document.getElementById('mode2-target');
+  elements.storyIdeas = document.getElementById('story-ideas');
   elements.submitNudgeBtn = document.getElementById('submit-nudge-btn');
   elements.giveUpBtn = document.getElementById('give-up-btn');
 
@@ -178,6 +183,30 @@ export function hideFeedback() {
  */
 export function setCurrentText(text) {
   elements.currentText.textContent = text;
+}
+
+export function setMode2Goal(target, ideas, onIdea) {
+  elements.mode2Target.textContent = target;
+  show(elements.storyGoal);
+  elements.storyIdeas.replaceChildren();
+  for (const idea of ideas) {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'story-idea';
+    button.textContent = idea;
+    button.addEventListener('click', () => onIdea(idea));
+    elements.storyIdeas.appendChild(button);
+  }
+}
+
+export function showStoryReaction(beat) {
+  elements.storyReactionText.textContent = beat;
+  show(elements.storyReaction);
+}
+
+export function hideStoryReaction() {
+  hide(elements.storyReaction);
+  elements.storyReactionText.textContent = '';
 }
 
 export function appendToCurrentText(text) {
@@ -410,8 +439,8 @@ export function showMode1Introduction(onDismiss) {
 export function showMode2Introduction(onDismiss) {
   elements.introTitle.textContent = 'Welcome to Mode 2';
   elements.introText.innerHTML = `
-    <p>Add short nudges to the displayed passage. An AI judge rates how strongly the passage points toward a hidden concept, from 0 to 100. This fit score is a subjective rating, not a probability.</p>
-    <p>Use the score changes as clues. Type the exact hidden concept in a nudge to win, or reveal it after ten turns.</p>
+    <p>Your story goal is visible above the passage. Add a move of up to 20 words, or choose an idea to get started. The AI writes one sentence showing what happens because of your move.</p>
+    <p>A separate AI judge rates how strongly the story points toward the goal. Aim for 80/100 within six turns. The fit score is a subjective rating, not a probability.</p>
   `;
 
   // Set up dismiss button handler
@@ -479,13 +508,37 @@ export function createMode1EndScreen(score, total, startingPrompt, gameText) {
 /**
  * Create end screen content for Mode 2 with AI analysis placeholder
  */
-export function createMode2EndScreen(target, success, turns, finalScore, scoreHistory, nudgeHistory) {
+export function createMode2EndScreen(target, success, turns, finalScore, scoreHistory, nudgeHistory, beatHistory) {
+  const turnLabel = turns === 1 ? 'turn' : 'turns';
   const resultMessage = success
-    ? `You found the exact hidden concept in ${turns} turns.`
-    : `The hidden concept was “${target}”. Your final fit score was ${finalScore}/100 after ${turns} turns.`;
+    ? `Your story reached ${finalScore}/100 toward “${target}” in ${turns} ${turnLabel}.`
+    : `Your story finished at ${finalScore}/100 toward “${target}” after ${turns} ${turnLabel}.`;
 
   // Create journey summary
   let journeySummary = createJourneySummary(scoreHistory);
+
+  let storyPayoff = '';
+  if (nudgeHistory.length > 0) {
+    let bestTurn = 0;
+    let bestGain = -Infinity;
+    for (let index = 0; index < nudgeHistory.length; index++) {
+      const gain = scoreHistory[index + 1] - scoreHistory[index];
+      if (gain > bestGain) {
+        bestGain = gain;
+        bestTurn = index;
+      }
+    }
+    const impact = bestGain > 0
+      ? `Turn ${bestTurn + 1} raised goal fit by ${bestGain} points.`
+      : 'The fit rating did not rise, but your moves still changed the story.';
+    storyPayoff = `
+      <div class="end-results-section">
+        <h3>A Move That Shaped the Story</h3>
+        <p>${impact}</p>
+        <p>You wrote “${escapeHtml(nudgeHistory[bestTurn])}” and the AI responded, “${escapeHtml(beatHistory[bestTurn])}”</p>
+      </div>
+    `;
+  }
 
   // Add nudge history
   let nudgeHistoryHTML = '';
@@ -493,13 +546,13 @@ export function createMode2EndScreen(target, success, turns, finalScore, scoreHi
     const nudgeListHTML = nudgeHistory
       .map((nudge, index) => {
         const score = scoreHistory[index + 1];
-        return `<li><strong>Turn ${index + 1}:</strong> “${escapeHtml(nudge)}” → ${score}/100 fit score</li>`;
+        return `<li><strong>Turn ${index + 1}, your move:</strong> “${escapeHtml(nudge)}”<br><strong>The AI continued:</strong> “${escapeHtml(beatHistory[index])}”<br>Fit score: ${score}/100</li>`;
       })
       .join('');
 
     nudgeHistoryHTML = `
       <div class="end-results-section">
-        <h3>Your Nudges</h3>
+        <h3>How Your Story Grew</h3>
         <ul style="text-align: left; padding-left: 20px;">
           ${nudgeListHTML}
         </ul>
@@ -509,13 +562,14 @@ export function createMode2EndScreen(target, success, turns, finalScore, scoreHi
 
   const content = `
     <div class="end-results-section">
-      <h3>Hidden Target</h3>
+      <h3>Story Goal</h3>
       <p style="font-size: 1.5rem; font-weight: bold; color: var(--primary-color);">
         ${escapeHtml(target)}
       </p>
       <p>${escapeHtml(resultMessage)}</p>
       <p>The fit score is an AI judgment of this passage. It is not a measured chance of the concept appearing.</p>
     </div>
+    ${storyPayoff}
     ${journeySummary}
     ${nudgeHistoryHTML}
     <div class="end-results-section ai-analysis-section">
@@ -530,7 +584,7 @@ export function createMode2EndScreen(target, success, turns, finalScore, scoreHi
   `;
 
   return {
-    title: success ? 'Success!' : 'Game Over',
+    title: success ? 'Story Goal Reached!' : 'Story Complete',
     content: content
   };
 }
@@ -598,6 +652,8 @@ export function resetWordCounter() {
  */
 export function clearGameUI() {
   clearCurrentText();
+  hide(elements.storyGoal);
+  hideStoryReaction();
   elements.tokenButtons.innerHTML = '';
   hideProbabilityTable();
   hideProbabilityMeter();
@@ -895,7 +951,7 @@ export function createJourneySummary(scoreHistory) {
         </div>
         <div class="journey-stat">
           <div class="journey-stat-value">${biggestJumpTurn ? `${biggestJump > 0 ? '+' : ''}${Math.round(biggestJump)} points` : '—'}</div>
-          <div class="journey-stat-label">${biggestJumpTurn ? `Biggest change (turn ${biggestJumpTurn})` : 'No nudges yet'}</div>
+          <div class="journey-stat-label">${biggestJumpTurn ? `Biggest change (turn ${biggestJumpTurn})` : 'No moves yet'}</div>
         </div>
         <div class="journey-stat">
           <div class="journey-stat-value">${increases} / ${decreases}</div>

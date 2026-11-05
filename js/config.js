@@ -38,10 +38,10 @@ export const CONFIG = {
     ]
   },
 
-  // Mode 2 Settings - "Find the Hidden Concept"
+  // Mode 2 Settings - "Steer the Story"
   mode2: {
-    maxTurns: 10,                 // Maximum number of user turns
-    maxNudgeWords: 6,             // Maximum words in a user nudge
+    maxTurns: 6,
+    maxNudgeWords: 20,
 
     // Target concepts to be guessed
     targets: [
@@ -56,6 +56,19 @@ export const CONFIG = {
       "discovery",
       "reunion"
     ],
+
+    ideas: {
+      accident: ['A small warning goes unnoticed.', 'The equipment begins to fail.', 'Someone makes a rushed choice.'],
+      argument: ['Two friends want opposite things.', 'A careless remark changes the mood.', 'Someone refuses to back down.'],
+      apology: ['Someone realizes they caused harm.', 'An old mistake comes up again.', 'A person asks to be heard.'],
+      confession: ['Someone can no longer keep a secret.', 'A hidden detail slips out.', 'The truth would change a friendship.'],
+      crime: ['An important object goes missing.', 'A witness notices a contradiction.', 'Someone has a reason to lie.'],
+      surprise: ['An expected plan suddenly changes.', 'An unexpected guest arrives.', 'Someone hides a gift or message.'],
+      revelation: ['A familiar fact has a new meaning.', 'A letter reveals a hidden connection.', 'Someone notices what others missed.'],
+      betrayal: ['A trusted friend makes a secret deal.', 'A promise is quietly broken.', 'Someone chooses loyalty to another person.'],
+      discovery: ['A clue appears in an odd place.', 'Someone opens a forgotten box.', 'A question leads to an answer.'],
+      reunion: ['Two people have been apart for years.', 'An old friend returns unexpectedly.', 'Someone recognizes a familiar voice.']
+    },
 
     // Starting prompts for Mode 2
     startingPrompts: [
