@@ -211,6 +211,7 @@ body {
     line-height: 1.8;
     min-height: 100px;
     color: var(--text-color);
+    white-space: pre-wrap;
 }
 
 .current-text:empty::before {
@@ -293,6 +294,59 @@ body {
 }
 
 /* Mode 2: Nudge Input */
+.story-goal,
+.story-reaction {
+    background: var(--text-bg);
+    padding: var(--spacing-md);
+    border-radius: var(--border-radius);
+    margin-bottom: var(--spacing-md);
+}
+
+.story-goal span,
+.story-reaction strong {
+    display: block;
+    font-weight: 700;
+    color: var(--text-color);
+}
+
+.story-goal strong {
+    display: block;
+    margin: 4px 0;
+    color: var(--primary-color);
+    font-size: var(--font-size-xl);
+    text-transform: capitalize;
+}
+
+.story-goal p,
+.story-reaction p {
+    margin: 4px 0 0;
+}
+
+.story-reaction {
+    border-left: 4px solid var(--primary-color);
+    margin-top: var(--spacing-md);
+}
+
+.story-ideas {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 4px 0 var(--spacing-sm);
+}
+
+.story-idea {
+    background: white;
+    border: 1px solid var(--border-color);
+    border-radius: 999px;
+    padding: 6px 10px;
+    cursor: pointer;
+    color: var(--text-color);
+}
+
+.story-idea:hover:not(:disabled) {
+    border-color: var(--primary-color);
+}
+
 .nudge-input-container {
     background: var(--text-bg);
     padding: var(--spacing-md);

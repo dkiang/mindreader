@@ -21,7 +21,7 @@
                     Guess the Next Token
                 </button>
                 <button id="mode2-btn" class="mode-btn" data-mode="mode2">
-                    Find the Hidden Concept
+                    Steer the Story
                 </button>
             </div>
         </header>
@@ -30,8 +30,17 @@
         <main class="main-content">
             <!-- Text Context Display -->
             <section id="text-display" class="text-display">
+                <div id="story-goal" class="story-goal hidden">
+                    <span>Your story goal</span>
+                    <strong id="mode2-target"></strong>
+                    <p>Guide the story toward this theme. Reach 80/100 to finish early.</p>
+                </div>
                 <div id="current-text" class="current-text">
                     <!-- Text will be dynamically inserted here -->
+                </div>
+                <div id="story-reaction" class="story-reaction hidden" aria-live="polite">
+                    <strong>The story responds</strong>
+                    <p id="story-reaction-text"></p>
                 </div>
             </section>
 
@@ -47,24 +56,25 @@
                 <!-- Mode 2: Nudge Input -->
                 <div id="mode2-controls" class="mode-controls hidden">
                     <div class="nudge-input-container">
-                        <label for="nudge-input">Enter your nudge (max 6 words):</label>
+                        <label for="nudge-input">What happens next? (up to 20 words)</label>
                         <input
                             type="text"
                             id="nudge-input"
-                            placeholder="Type a short phrase..."
-                            maxlength="50"
-                            aria-label="Nudge input"
+                            placeholder="Add a clue, choice, or twist..."
+                            maxlength="180"
+                            aria-label="Story move"
                         >
+                        <div id="story-ideas" class="story-ideas" aria-label="Story move ideas"></div>
                         <div class="word-counter">
-                            <span id="word-count">0</span> / 6 words
+                            <span id="word-count">0</span> / 20 words
                         </div>
-                        <button id="submit-nudge-btn" class="primary-btn">Submit Nudge</button>
+                        <button id="submit-nudge-btn" class="primary-btn">Add to Story</button>
                     </div>
                     <div class="turn-counter">
-                        <span>Turn: <span id="current-turn">0</span> / <span id="max-turns">10</span></span>
+                        <span>Turn: <span id="current-turn">0</span> / <span id="max-turns">6</span></span>
                     </div>
                     <div class="give-up-container">
-                        <button id="give-up-btn" class="secondary-btn">End Game</button>
+                        <button id="give-up-btn" class="secondary-btn">Finish Story</button>
                     </div>
                 </div>
 
@@ -96,8 +106,8 @@
 
                 <!-- Mode 2: Visual Feedback System -->
                 <div id="probability-meter-container" class="probability-meter-container hidden">
-                    <h3>AI Target Fit Score</h3>
-                    <p class="probability-explanation">A model rates how strongly your passage points to the hidden concept, from 0 to 100. This is a subjective score, not a probability.</p>
+                    <h3>Story Goal Fit</h3>
+                    <p class="probability-explanation">A model rates how strongly the story points toward your goal, from 0 to 100. This is a subjective score, not a probability. The AI also continues your story after each move.</p>
 
                     <!-- Trajectory Sparkline Chart -->
                     <div id="trajectory-sparkline" class="trajectory-sparkline" role="img" aria-label="Fit score trajectory chart">

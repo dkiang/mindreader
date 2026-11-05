@@ -1,6 +1,6 @@
 # MINDREADER
 
-An interactive app for exploring model tokens and testing how short clues change a model's rating of a story prompt.
+An interactive app for exploring model tokens and collaboratively steering a short story.
 
 ## What the numbers mean
 
@@ -12,11 +12,11 @@ After each guess, the table shows the visible alternatives returned by the API f
 
 These likelihoods are conditional on the app's continuation instruction, the prompt, and the tokens already generated. They are not a universal probability for the next word of the starting sentence. The score at the end is simply the fraction of visible token choices you guessed correctly.
 
-### Mode 2: Find the Hidden Concept
+### Mode 2: Steer the Story
 
-The app chooses a concept, shows a starting passage, and lets you add up to ten short nudges. After a baseline rating and each nudge, the model gives a **fit score from 0 to 100** for how strongly the passage points toward the concept. This is a subjective model rating, **not a measured probability** that the concept will appear in a future continuation. The scores across turns are independent ratings and do not add to 100.
+The app shows a story goal from the beginning. You can write a move of up to 20 words, choose an idea to get started, and play up to six turns. After each move, a model that does not receive the goal writes one sentence showing a consequence of your move. The story visibly changes whether or not its rating changes.
 
-The app does not secretly generate a narrative. The displayed passage consists of the starting prompt and your nudges. Typing the exact hidden concept in a nudge wins; otherwise the concept is revealed after ten turns or when you end the game. Scores can vary between model calls, so a change does not prove that a nudge caused it. The target is hidden from the normal interface, though it is sent to the server for scoring and is not protected against browser inspection.
+A separate model call gives a **fit score from 0 to 100** for how strongly the whole story points toward the visible goal. This is a subjective rating, **not a measured probability** that the goal will appear in a future continuation. The scorer is instructed to use the full range rather than only 25-point steps, but scores can still remain flat or vary between calls. A score change describes the combined player move and AI continuation; it is not proof that one phrase alone caused the change. Reaching 80/100 after a turn ends the game early. The summary includes the player's moves, the AI's continuations, and a specific example of how the story changed. An optional AI analysis is prompted to recognize that the player knew the goal throughout.
 
 ## Running the app
 
@@ -26,9 +26,9 @@ For local testing, install dependencies and use `vercel dev` with a development 
 
 ## Configuration and usage
 
-- Starting prompts, round count, target concepts, and nudge limit are in `js/config.js`.
+- Starting prompts, round count, story goals, ideas, and move limit are in `js/config.js`.
 - The model and request parameters are in `api/chat.js`. Mode 1 requests 10 alternative tokens per position and uses temperature 0.
-- Mode 1 makes one model call per game. Mode 2 makes one call for the baseline, one per submitted nudge, and one optional analysis call at the end. Check the OpenAI Usage Dashboard for actual costs.
+- Mode 1 makes one model call per game. Mode 2 makes one call for the baseline, two per submitted story move (continuation and rating), and one optional analysis call at the end. Check the OpenAI Usage Dashboard for actual costs.
 
 ## Source of token probabilities
 

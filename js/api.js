@@ -40,10 +40,18 @@ export async function getTargetFitScore(context, target) {
   return Number.parseInt(content, 10);
 }
 
-export async function generateNudgeAnalysis(startingPrompt, nudges, scores, target, won) {
+export async function getStoryBeat(context, move) {
+  const response = await callTask('storyBeat', { context, move });
+  const content = response?.choices?.[0]?.message?.content?.trim();
+  if (!content) throw new Error('The model did not continue the story');
+  return content;
+}
+
+export async function generateNudgeAnalysis(startingPrompt, nudges, beats, scores, target, won) {
   const response = await callTask('nudgeAnalysis', {
     startingPrompt,
     nudges,
+    beats,
     scores,
     target,
     won

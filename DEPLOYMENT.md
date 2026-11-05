@@ -13,15 +13,15 @@ The frontend calls `api/chat` relative to the page URL, so a deployment under `/
 
 ## Optional environment variables
 
-- `ALLOWED_ORIGINS`: Comma-separated allowed browser origins. The default allows `https://www.kiang.net`, `https://kiang.net`, and `http://localhost:3000`. Set this when using a different domain.
+- `ALLOWED_ORIGINS`: Comma-separated allowed browser origins. The default allows `https://www.kiang.net`, `https://kiang.net`, and `http://localhost:3000`. The deployment's own Vercel URL is also allowed for preview testing. Set this when using a different domain.
 - `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN`: When both are set, the function enforces 30 requests per IP per minute and 300 per IP per day using Upstash. Without them, it enforces a best-effort 30 requests per IP per minute in each serverless instance's memory.
 
 The origin check limits ordinary cross-site browser requests but does not authenticate users. A script can set its own `Origin` header. The IP limits may affect many students behind one school network address; adjust the limits in `api/chat.js` if that is your use case.
 
 ## What is billed
 
-- Mode 1: one Chat Completions request for up to five generated tokens and their token likelihoods.
-- Mode 2: one request for the starting fit score, one for each submitted nudge, and an optional analysis request at the end.
+- Mode 1: one Chat Completions request for up to ten generated tokens and their token likelihoods, with up to five visible rounds.
+- Mode 2: one request for the starting fit score, two for each story move (continuation and fit score), and an optional analysis request at the end.
 
 Check the OpenAI Usage Dashboard for current charges. The model is configured in `api/chat.js` and currently uses `gpt-4o-mini`.
 

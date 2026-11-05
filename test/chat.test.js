@@ -45,5 +45,28 @@ test('server requests one continuation with per-position log probabilities', asy
   assert.equal(requests[1].model, 'gpt-4o-mini');
   assert.equal(requests[1].logprobs, undefined);
   assert.match(requests[1].messages[0].content, /not a probability/);
+  assert.match(requests[1].messages[0].content, /full scale/);
   assert.match(requests[1].messages[1].content, /Target concept: discovery/);
+
+  const beatRes = { status: res.status, json: res.json };
+  await handler({
+    ...req,
+    body: { task: 'storyBeat', context: 'The map revealed a secret. Someone opened it.', move: 'Someone opened it.' }
+  }, beatRes);
+  assert.equal(beatRes.code, 200);
+  assert.match(requests[2].messages[0].content, /collaborative story partner/);
+  assert.ok(!requests[2].messages[1].content.includes('discovery'));
+
+  const analysisRes = { status: res.status, json: res.json };
+  await handler({
+    ...req,
+    body: {
+      task: 'nudgeAnalysis', startingPrompt: 'The map revealed', target: 'discovery',
+      nudges: ['Someone opened it.'], beats: ['A hidden cave appeared.'],
+      scores: [30, 45], won: false
+    }
+  }, analysisRes);
+  assert.equal(analysisRes.code, 200);
+  assert.match(requests[3].messages[0].content, /player knows the target/);
+  assert.match(requests[3].messages[1].content, /A hidden cave appeared/);
 });
