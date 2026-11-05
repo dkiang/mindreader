@@ -116,13 +116,6 @@ export const CONFIG = {
     }
   },
 
-  // OpenAI API Settings
-  api: {
-    model: "gpt-3.5-turbo",       // Model to use (can be changed to gpt-4)
-    maxTokens: 50,                // Maximum tokens per generation
-    endpoint: "https://api.openai.com/v1/chat/completions"
-  },
-
   // UI Settings
   ui: {
     animationDuration: 300,       // Duration for animations (ms)

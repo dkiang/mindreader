@@ -6,7 +6,7 @@ import OpenAI from 'openai';
 import { Ratelimit } from '@upstash/ratelimit';
 import { Redis } from '@upstash/redis';
 
-const MODEL = 'gpt-3.5-turbo';
+const MODEL = 'gpt-4o-mini';
 const DEFAULT_ALLOWED_ORIGINS = 'https://www.kiang.net,https://kiang.net,http://localhost:3000';
 const memoryRateLimits = new Map();
 let upstashLimiters;
@@ -250,6 +250,9 @@ export default async function handler(req, res) {
     console.error('OpenAI API Error:', error);
     if (error.status === 429) return res.status(429).json({ error: 'RATE_LIMIT' });
     if (error.status === 401) return res.status(401).json({ error: 'INVALID_API_KEY' });
+    if (error.code === 'model_not_found') {
+      return res.status(503).json({ error: 'MODEL_UNAVAILABLE' });
+    }
     return res.status(500).json({ error: 'Server error' });
   }
 }

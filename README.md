@@ -76,8 +76,7 @@ You can customize game settings in `js/config.js`:
 - `targets`: List of possible hidden target concepts
 
 ### API Settings
-- `model`: OpenAI model to use (default: "gpt-3.5-turbo")
-- Change to "gpt-4" for better results (higher cost)
+The serverless API uses `gpt-4o-mini`. Change `MODEL` in `api/chat.js` to use a different supported model.
 
 ## Usage
 

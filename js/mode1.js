@@ -108,6 +108,8 @@ async function playRound() {
       ui.showError('API rate limit reached. Please wait a moment and try again.');
     } else if (error.message === 'INVALID_API_KEY') {
       ui.showError('Invalid API key. Please check your API key and try again.');
+    } else if (error.message === 'MODEL_UNAVAILABLE') {
+      ui.showError('The AI model is unavailable. Please contact the site owner.');
     } else {
       ui.showError('Error loading next token. Please try again.');
     }

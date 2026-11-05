@@ -32,6 +32,8 @@ async function callTask(task, inputs = {}) {
       throw new Error('RATE_LIMIT');
     } else if (response.status === 401) {
       throw new Error('INVALID_API_KEY');
+    } else if (errorData.error === 'MODEL_UNAVAILABLE') {
+      throw new Error('MODEL_UNAVAILABLE');
     } else {
       throw new Error(`API Error: ${errorData.error || response.statusText}`);
     }

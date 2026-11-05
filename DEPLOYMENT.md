@@ -206,15 +206,7 @@ View logs in Vercel:
 
 ## Cost Management
 
-### Estimated Costs (OpenAI GPT-3.5-turbo)
-
-- **Mode 1** (Guess the Next Token): ~$0.001 per round
-- **Mode 2** (Steer the Hidden Narrative): ~$0.002 per round
-
-**For 100 students:**
-- Each playing 10 rounds of Mode 1 = 1,000 rounds × $0.001 = **$1.00**
-- Each playing 5 rounds of Mode 2 = 500 rounds × $0.002 = **$1.00**
-- **Total: ~$2-5** depending on usage
+The app uses `gpt-4o-mini`. Costs depend on current model pricing, prompt length, and usage. Check the OpenAI Usage Dashboard for actual charges.
 
 ### Monitor Usage:
 1. Check [OpenAI Usage Dashboard](https://platform.openai.com/usage)
