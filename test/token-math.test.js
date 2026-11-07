@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readTokenPosition, chooseTokenOptions, displayToken, groupVisibleAlternatives, isSpacingToken, percentageTenths } from '../js/token-math.js';
+import { buildWholeWordFrames, readTokenPosition, chooseTokenOptions, displayToken, groupVisibleAlternatives, isSpacingToken, isWholeWordCandidate, percentageTenths } from '../js/token-math.js';
 
 test('the generated punctuation token remains the answer', () => {
   const frame = readTokenPosition({
@@ -56,4 +56,47 @@ test('displayed tenths total 100.0% without renormalizing listed tokens', () => 
   const percentages = percentageTenths([1 / 3, 1 / 3, 1 / 3, 0]);
   assert.equal(percentages.reduce((sum, value) => sum + value, 0), 1000);
   assert.ok(percentages.slice(0, 3).every(value => value >= 333 && value <= 334));
+});
+
+test('word rounds skip generated fragments while keeping the passage intact', () => {
+  const position = (token, alternatives) => readTokenPosition({
+    token,
+    logprob: Math.log(0.5),
+    top_logprobs: [
+      { token, logprob: Math.log(0.5) },
+      ...alternatives.map(([word, probability]) => ({ token: word, logprob: Math.log(probability) }))
+    ]
+  });
+  const sequence = [
+    position('Im', [[' In', 0.2]]),
+    position('port', [[' any', 0.2]]),
+    position('ant', [[' this', 0.2]]),
+    position(' plan', [[' path', 0.2], ['.', 0.1], [' ', 0.05], ['ning', 0.05]]),
+    position(' works', [[' helps', 0.2]])
+  ];
+
+  const frames = buildWholeWordFrames(sequence, 5);
+  assert.equal(frames.length, 1);
+  assert.equal(frames[0].chosenLabel, 'plan');
+  assert.equal(frames[0].precedingText, 'Important');
+  assert.deepEqual(frames[0].distribution.map(item => item.token), ['plan', 'path']);
+  assert.ok(Math.abs(frames[0].otherProbability - 0.3) < 1e-10);
+  assert.ok(chooseTokenOptions(frames[0].distribution, frames[0].chosenLabel)
+    .every(item => isWholeWordCandidate(item.token, true)));
+});
+
+test('a token that could continue at the end of the response is not a word round', () => {
+  const sequence = [
+    readTokenPosition({ token: ' walk', logprob: Math.log(0.6), top_logprobs: [
+      { token: ' walk', logprob: Math.log(0.6) }, { token: ' run', logprob: Math.log(0.2) }
+    ] }),
+    readTokenPosition({ token: 'ing', logprob: Math.log(0.7), top_logprobs: [
+      { token: 'ing', logprob: Math.log(0.7) }, { token: 'ed', logprob: Math.log(0.1) }
+    ] })
+  ];
+  assert.deepEqual(buildWholeWordFrames(sequence, 5), []);
+  assert.equal(isWholeWordCandidate('ing', false), false);
+  assert.equal(isWholeWordCandidate('!', true), false);
+  assert.equal(isWholeWordCandidate('2024', true), false);
+  assert.equal(isWholeWordCandidate(" can't", false), true);
 });

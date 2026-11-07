@@ -13,12 +13,12 @@ export function isSpacingToken(token) {
 }
 
 /** Combine tokens that differ only by assumed leading spaces. */
-export function groupVisibleAlternatives(distribution, otherProbability, chosenToken) {
+export function groupVisibleAlternatives(distribution, otherProbability, chosenToken, isEligible = () => true) {
   const groups = new Map();
   let hiddenProbability = otherProbability;
 
   for (const item of distribution) {
-    if (isSpacingToken(item.token)) {
+    if (isSpacingToken(item.token) || !isEligible(item.token)) {
       hiddenProbability += item.probability;
       continue;
     }
@@ -32,6 +32,48 @@ export function groupVisibleAlternatives(distribution, otherProbability, chosenT
   const visible = [...groups.values()].sort((a, b) => b.probability - a.probability);
   visible.forEach((item, index) => { item.rank = index + 1; });
   return { distribution: visible, otherProbability: hiddenProbability };
+}
+
+/** A word must start at a boundary and occupy the entire visible token. */
+export function isWholeWordCandidate(token, atBoundary) {
+  return /^ *\p{L}[\p{L}\p{M}]*(?:['’\-]\p{L}[\p{L}\p{M}]*)*$/u.test(token) &&
+    (token.startsWith(' ') || atBoundary);
+}
+
+/** Build playable rounds only when the sampled token is a complete word. */
+export function buildWholeWordFrames(sequence, maxRounds) {
+  const frames = [];
+  let precedingText = '';
+
+  for (let index = 0; index < sequence.length && frames.length < maxRounds; index++) {
+    const position = sequence[index];
+    const previous = sequence[index - 1]?.chosenToken;
+    const next = sequence[index + 1]?.chosenToken;
+    const atBoundary = index === 0 || !/[\p{L}\p{N}'’\-]$/u.test(previous);
+    const completeWord = isWholeWordCandidate(position.chosenToken, atBoundary) &&
+      typeof next === 'string' && /^[^\p{L}\p{N}'’\-]/u.test(next);
+
+    if (completeWord) {
+      const visible = groupVisibleAlternatives(
+        position.distribution,
+        position.otherProbability,
+        position.chosenToken,
+        token => isWholeWordCandidate(token, atBoundary)
+      );
+      frames.push({
+        ...position,
+        ...visible,
+        chosenLabel: displayToken(position.chosenToken),
+        precedingText
+      });
+      precedingText = '';
+      continue;
+    }
+
+    precedingText += position.chosenToken;
+  }
+
+  return frames;
 }
 
 export function readTokenPosition(position) {

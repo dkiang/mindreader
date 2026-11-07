@@ -18,7 +18,7 @@
 
             <div class="mode-selector">
                 <button id="mode1-btn" class="mode-btn active" data-mode="mode1">
-                    Guess the Next Token
+                    Guess the Next Word
                 </button>
                 <button id="mode2-btn" class="mode-btn" data-mode="mode2">
                     Steer the Story
@@ -88,12 +88,12 @@
             <section id="feedback-area" class="feedback-area">
                 <!-- Mode 1: Probability Table -->
                 <div id="probability-display" class="probability-display hidden">
-                    <h3>Next-token alternatives</h3>
-                    <p class="probability-explanation">These are the model's token likelihoods at this step. Leading spaces are assumed; matching visible tokens are combined. All other tokens completes the distribution; displayed values are rounded to total 100.0%.</p>
+                    <h3>Word choices</h3>
+                    <p class="probability-explanation">These are the model's token likelihoods at this step. Leading spaces are assumed; matching visible words are combined. Fragments, punctuation, and unlisted tokens are included in All other tokens. Displayed values total 100.0%.</p>
                     <table id="probability-table" class="probability-table">
                         <thead>
                             <tr>
-                                <th>Token</th>
+                                <th>Word</th>
                                 <th>Probability</th>
                                 <th>Rank</th>
                             </tr>

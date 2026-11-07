@@ -4,13 +4,13 @@ An interactive app for exploring model tokens and collaboratively steering a sho
 
 ## What the numbers mean
 
-### Mode 1: Guess the Next Token
+### Mode 1: Guess the Next Word
 
-The server asks `gpt-4o-mini` to continue a starting prompt and requests up to ten generated tokens with log probabilities. Each round asks you to identify the visible text of the token the model actually generated at that position in **the same response**. A token can be a word, a word fragment, or punctuation. Space-only tokens are skipped as rounds. Leading spaces are hidden, and alternatives that differ only by leading spaces share one choice and one probability row.
+The server asks `gpt-4o-mini` to continue a starting prompt and requests up to ten generated tokens with log probabilities. Each round asks you to identify a complete word generated at one token position in **the same response**. Positions containing fragments or punctuation are skipped as rounds, but their generated text is added to the passage before the next question. A word must start at a word boundary, and the next generated token must confirm its end. Choices and probability rows contain only word-shaped tokens that start at a word boundary. Leading spaces are hidden, and eligible alternatives that differ only by leading spaces share one choice and one probability row. A game may have fewer than five rounds.
 
-After each guess, the table shows the visible alternatives returned by the API for that token position, plus the sampled token if it was outside the returned top list. Each raw token probability is `exp(logprob)`; probabilities of alternatives with the same visible text are added. **All other tokens** includes the remaining probability mass and any space-only alternatives. The displayed values are rounded to tenths of a percent and allocated so the table totals 100.0%. The app does not rescale the listed tokens to pretend they are the entire distribution. The model's generated choice is labeled only when it is not the highest-probability visible choice.
+After each guess, the table shows the eligible alternatives returned by the API for that token position, plus the sampled token if it was outside the returned top list. Each raw token probability is `exp(logprob)`; probabilities of alternatives with the same visible text are added. **All other tokens** includes the remaining probability mass, fragments, punctuation, and space-only alternatives. The displayed values are rounded to tenths of a percent and allocated so the table totals 100.0%. The app does not rescale the listed tokens to pretend they are the entire distribution. The model's generated choice is labeled only when it is not the highest-probability visible choice. The API does not reveal how an unchosen alternative would continue, so its displayed token may have been followed by another token in a hypothetical continuation.
 
-These likelihoods are conditional on the app's continuation instruction, the prompt, and the tokens already generated. They are not a universal probability for the next word of the starting sentence. The score at the end is simply the fraction of visible token choices you guessed correctly.
+These likelihoods are conditional on the app's continuation instruction, the prompt, and the tokens already generated. They are not a universal probability for the next word of the starting sentence. The score at the end is simply the fraction of displayed word choices you guessed correctly.
 
 ### Mode 2: Steer the Story
 

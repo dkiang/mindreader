@@ -418,8 +418,8 @@ export function hideSummaryModal() {
 export function showMode1Introduction(onDismiss) {
   elements.introTitle.textContent = 'Welcome to Mode 1';
   elements.introText.innerHTML = `
-    <p>The model continues the displayed prompt. Guess each visible token from one response, up to four choices per step. A token can be a word, part of a word, or punctuation. Spaces between tokens are assumed.</p>
-    <p>After each guess, you'll see the model's likelihoods for the returned alternatives. Tokens that differ only by a leading space share one row. The table groups every unlisted possibility under “All other tokens.”</p>
+    <p>The model continues the displayed prompt. Guess the next complete word from one response, up to four choices per step. Token fragments and punctuation are added to the passage between rounds.</p>
+    <p>After each guess, you'll see the model's token likelihoods for the displayed word choices. Tokens that differ only by a leading space share one row. Fragments, punctuation, and unlisted possibilities are grouped under “All other tokens.”</p>
   `;
 
   // Set up dismiss button handler
@@ -478,7 +478,7 @@ export function createMode1EndScreen(score, total, startingPrompt, gameText) {
         ${score} / ${total} (${percentage}%)
       </p>
       <p>${robotMessage}</p>
-      <p>This is the share of visible tokens you guessed in this one model response.</p>
+      <p>This is the share of complete-word choices you guessed in this one model response.</p>
     </div>
     <div class="end-results-section">
       <h3>Generated Text</h3>
@@ -486,7 +486,7 @@ export function createMode1EndScreen(score, total, startingPrompt, gameText) {
         “${safeStartingPrompt}<strong>${safeGamePlayedPortion}</strong>”
       </p>
       <p style="font-size: 0.9rem; color: #666; margin-top: 8px;">
-        <strong>Bold text</strong> shows the generated tokens you played. A space may be added at the prompt boundary for readability.
+        <strong>Bold text</strong> shows the generated passage, including text skipped between word choices. A space may be added at the prompt boundary for readability.
       </p>
     </div>
     <div class="end-results-section">
@@ -494,7 +494,7 @@ export function createMode1EndScreen(score, total, startingPrompt, gameText) {
       <ul style="text-align: left; padding-left: 20px;">
         <li>Each table describes one token position in the model's response to the prompt.</li>
         <li>Returned alternatives and “All other tokens” together cover 100% of that position's likelihood.</li>
-        <li>Tokens are not necessarily whole words.</li>
+        <li>Some model tokens are fragments or punctuation, so those positions are skipped as rounds.</li>
       </ul>
     </div>
   `;

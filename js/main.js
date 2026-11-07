@@ -80,7 +80,7 @@ function switchMode(mode) {
   const elements = ui.getElements();
 
   if (mode === 'mode1') {
-    // Mode 1: Guess the Next Token
+    // Mode 1: Guess the Next Word
     elements.mode1Btn.classList.add('active');
     elements.mode2Btn.classList.remove('active');
 

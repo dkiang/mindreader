@@ -4,9 +4,9 @@
  */
 
 export const CONFIG = {
-  // Mode 1 Settings - "Guess the Next Token"
+  // Mode 1 Settings - "Guess the Next Word"
   mode1: {
-    rounds: 5,                    // Maximum generated tokens per game
+    rounds: 5,                    // Maximum complete-word rounds per game
 
     // Starting prompts for Mode 1
     startingPrompts: [
