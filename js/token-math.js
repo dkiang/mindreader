@@ -107,8 +107,12 @@ export function readTokenPosition(position) {
     item.rank = item.sampledOutsideTop ? null : ++rank;
   });
 
-  const listedMass = distribution.reduce((sum, item) => sum + item.probability, 0);
-  if (listedMass > 1.000001) throw new Error('Invalid token probabilities from model');
+  let listedMass = distribution.reduce((sum, item) => sum + item.probability, 0);
+  if (listedMass > 1) {
+    if (listedMass > 1.001) throw new Error('Invalid token probabilities from model');
+    distribution.forEach(item => { item.probability /= listedMass; });
+    listedMass = 1;
+  }
 
   return {
     chosenToken: position.token,

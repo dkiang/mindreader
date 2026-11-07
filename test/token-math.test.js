@@ -58,6 +58,29 @@ test('displayed tenths total 100.0% without renormalizing listed tokens', () => 
   assert.ok(percentages.slice(0, 3).every(value => value >= 333 && value <= 334));
 });
 
+test('tiny logprob rounding overflow does not reject a valid model response', () => {
+  const frame = readTokenPosition({
+    token: ' weeks',
+    logprob: -0.01860809326171875,
+    top_logprobs: [
+      { token: ' weeks', logprob: -0.01860809326171875 },
+      { token: ' months', logprob: -4.143608093261719 },
+      { token: ' days', logprob: -6.018608093261719 },
+      { token: ' sessions', logprob: -8.893608093261719 },
+      { token: ' times', logprob: -13.893608093261719 },
+      { token: ' trading', logprob: -15.643608093261719 },
+      { token: ' week', logprob: -15.893608093261719 },
+      { token: 'weeks', logprob: -16.14360809326172 },
+      { token: ' quarters', logprob: -16.39360809326172 },
+      { token: ' years', logprob: -16.51860809326172 }
+    ]
+  });
+
+  const listedMass = frame.distribution.reduce((sum, item) => sum + item.probability, 0);
+  assert.ok(listedMass <= 1);
+  assert.equal(frame.otherProbability, 0);
+});
+
 test('word rounds skip generated fragments while keeping the passage intact', () => {
   const position = (token, alternatives) => readTokenPosition({
     token,
