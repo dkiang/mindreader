@@ -12,6 +12,40 @@ export function isSpacingToken(token) {
   return /^ +$/.test(token);
 }
 
+const SHORT_WORDS = new Set([
+  'a', 'i', 'am', 'an', 'as', 'at', 'be', 'by', 'do', 'go', 'he', 'if', 'in', 'is', 'it',
+  'me', 'my', 'no', 'of', 'oh', 'on', 'or', 'so', 'to', 'up', 'us', 'we',
+  'ace', 'act', 'add', 'age', 'ago', 'aid', 'air', 'all', 'and', 'any', 'are', 'arm', 'art',
+  'ask', 'bad', 'bag', 'bar', 'bed', 'big', 'bit', 'box', 'boy', 'bus', 'but', 'buy', 'can',
+  'car', 'cat', 'cup', 'cut', 'dad', 'day', 'did', 'dog', 'due', 'eat', 'end', 'eye', 'far',
+  'few', 'fit', 'fix', 'fly', 'for', 'fun', 'get', 'got', 'had', 'has', 'hat', 'her', 'him',
+  'his', 'hit', 'hot', 'how', 'job', 'key', 'law', 'let', 'lie', 'lot', 'low', 'man', 'map',
+  'may', 'mom', 'new', 'not', 'now', 'odd', 'off', 'old', 'one', 'our', 'out', 'own', 'pay',
+  'path', 'pen', 'put', 'ran', 'red', 'run', 'sad', 'saw', 'say', 'see', 'set', 'she', 'sit', 'sky',
+  'son', 'sun', 'tea', 'the', 'too', 'top', 'try', 'two', 'use', 'war', 'was', 'way', 'who',
+  'why', 'win', 'won', 'yes', 'yet', 'you',
+  'able', 'back', 'bell', 'call', 'came', 'city', 'cold', 'dark', 'door', 'down', 'drop',
+  'fall', 'felt', 'find', 'fire', 'food', 'from', 'game', 'gift', 'girl', 'good', 'home',
+  'hour', 'into', 'jump', 'keep', 'late', 'life', 'line', 'look', 'made', 'make', 'many',
+  'move', 'much', 'name', 'open', 'over', 'plan', 'play', 'read', 'ring', 'rise', 'road',
+  'room', 'said', 'same', 'soar', 'some', 'soon', 'step', 'stop', 'take', 'talk', 'team',
+  'that', 'them', 'then', 'they', 'this', 'time', 'turn', 'very', 'wait', 'walk', 'wall',
+  'went', 'were', 'what', 'when', 'will', 'with', 'word', 'work'
+]);
+
+const TOKEN_FRAGMENTS = new Set([
+  'hes', 'im', 'inst', 'st', 're', 'pre', 'spec', 'anal', 'econ', 'indic', 'vol'
+]);
+
+export function isPlausibleWordChoice(token, atBoundary = true) {
+  if (!isWholeWordCandidate(token, atBoundary)) return false;
+  const word = displayToken(token).toLowerCase();
+  if (TOKEN_FRAGMENTS.has(word)) return false;
+  if (word.length <= 4) return SHORT_WORDS.has(word);
+  if (!/[aeiouy]/.test(word)) return false;
+  return true;
+}
+
 /** Combine tokens that differ only by assumed leading spaces. */
 export function groupVisibleAlternatives(distribution, otherProbability, chosenToken, isEligible = () => true) {
   const groups = new Map();
@@ -50,7 +84,7 @@ export function buildWholeWordFrames(sequence, maxRounds) {
     const previous = sequence[index - 1]?.chosenToken;
     const next = sequence[index + 1]?.chosenToken;
     const atBoundary = index === 0 || !/[\p{L}\p{N}'’\-]$/u.test(previous);
-    const completeWord = isWholeWordCandidate(position.chosenToken, atBoundary) &&
+    const completeWord = isPlausibleWordChoice(position.chosenToken, atBoundary) &&
       typeof next === 'string' && /^[^\p{L}\p{N}'’\-]/u.test(next);
 
     if (completeWord) {
@@ -58,17 +92,19 @@ export function buildWholeWordFrames(sequence, maxRounds) {
         position.distribution,
         position.otherProbability,
         position.chosenToken,
-        token => isWholeWordCandidate(token, atBoundary)
+        token => isPlausibleWordChoice(token, atBoundary)
       );
-      frames.push({
-        ...position,
-        ...visible,
-        index,
-        chosenLabel: displayToken(position.chosenToken),
-        precedingText
-      });
-      precedingText = '';
-      continue;
+      if (visible.distribution.length >= 2) {
+        frames.push({
+          ...position,
+          ...visible,
+          index,
+          chosenLabel: displayToken(position.chosenToken),
+          precedingText
+        });
+        precedingText = '';
+        continue;
+      }
     }
 
     precedingText += position.chosenToken;

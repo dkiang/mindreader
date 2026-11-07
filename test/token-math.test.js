@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { buildWholeWordFrames, readTokenPosition, chooseTokenOptions, displayToken, groupVisibleAlternatives, isSpacingToken, isWholeWordCandidate, percentageTenths } from '../js/token-math.js';
+import { buildWholeWordFrames, readTokenPosition, chooseTokenOptions, displayToken, groupVisibleAlternatives, isSpacingToken, isWholeWordCandidate, isPlausibleWordChoice, percentageTenths } from '../js/token-math.js';
 
 test('the generated punctuation token remains the answer', () => {
   const frame = readTokenPosition({
@@ -107,6 +107,31 @@ test('word rounds skip generated fragments while keeping the passage intact', ()
   assert.ok(Math.abs(frames[0].otherProbability - 0.3) < 1e-10);
   assert.ok(chooseTokenOptions(frames[0].distribution, frames[0].chosenLabel)
     .every(item => isWholeWordCandidate(item.token, true)));
+});
+
+test('mode 1 choices hide token fragments that are not plausible words', () => {
+  const position = readTokenPosition({
+    token: 'open',
+    logprob: Math.log(0.3),
+    top_logprobs: [
+      { token: 'open', logprob: Math.log(0.3) },
+      { token: 'experience', logprob: Math.log(0.2) },
+      { token: 'make', logprob: Math.log(0.15) },
+      { token: 'inst', logprob: Math.log(0.12) },
+      { token: 're', logprob: Math.log(0.1) },
+      { token: 'w', logprob: Math.log(0.08) }
+    ]
+  });
+  const next = readTokenPosition({
+    token: '.',
+    logprob: Math.log(0.9),
+    top_logprobs: [{ token: '.', logprob: Math.log(0.9) }]
+  });
+
+  const [frame] = buildWholeWordFrames([position, next], 1);
+  assert.deepEqual(frame.distribution.map(item => item.token), ['open', 'experience', 'make']);
+  assert.ok(chooseTokenOptions(frame.distribution, frame.chosenLabel)
+    .every(item => isPlausibleWordChoice(item.token, true)));
 });
 
 test('a token that could continue at the end of the response is not a word round', () => {
