@@ -59,16 +59,16 @@ export const CONFIG = {
     ],
 
     ideas: {
-      accident: ['A small warning goes unnoticed.', 'The equipment begins to fail.', 'Someone makes a rushed choice.'],
-      argument: ['Two friends want opposite things.', 'A careless remark changes the mood.', 'Someone refuses to back down.'],
-      apology: ['Someone realizes they caused harm.', 'An old mistake comes up again.', 'A person asks to be heard.'],
-      confession: ['Someone can no longer keep a secret.', 'A hidden detail slips out.', 'The truth would change a friendship.'],
-      crime: ['An important object goes missing.', 'A witness notices a contradiction.', 'Someone has a reason to lie.'],
-      surprise: ['An expected plan suddenly changes.', 'An unexpected guest arrives.', 'Someone hides a gift or message.'],
-      revelation: ['A familiar fact has a new meaning.', 'A letter reveals a hidden connection.', 'Someone notices what others missed.'],
-      betrayal: ['A trusted friend makes a secret deal.', 'A promise is quietly broken.', 'Someone chooses loyalty to another person.'],
-      discovery: ['A clue appears in an odd place.', 'Someone opens a forgotten box.', 'A question leads to an answer.'],
-      reunion: ['Two people have been apart for years.', 'An old friend returns unexpectedly.', 'Someone recognizes a familiar voice.']
+      accident: ['small warning', 'failing equipment', 'rushed choice'],
+      argument: ['opposite wants', 'careless remark', 'refusal to back down'],
+      apology: ['harm caused', 'old mistake', 'request to be heard'],
+      confession: ['kept secret', 'hidden detail', 'truth that changes things'],
+      crime: ['missing object', 'witness contradiction', 'reason to lie'],
+      surprise: ['changed plan', 'unexpected guest', 'hidden gift or message'],
+      revelation: ['familiar fact', 'hidden connection', 'overlooked clue'],
+      betrayal: ['secret deal', 'broken promise', 'divided loyalty'],
+      discovery: ['odd clue', 'forgotten box', 'question with an answer'],
+      reunion: ['years apart', 'old friend returning', 'familiar voice']
     },
 
     // Starting prompts for Mode 2

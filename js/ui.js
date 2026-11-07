@@ -5,6 +5,7 @@
 import { displayToken, percentageTenths } from './token-math.js';
 
 const START_PROMPT_TEXT = 'Click Start Game to Begin';
+const DEFAULT_NUDGE_PLACEHOLDER = 'Add a clue, choice, or twist...';
 
 // DOM Element Cache
 const elements = {};
@@ -199,6 +200,14 @@ export function setMode2Goal(target, ideas, onIdea) {
     button.addEventListener('click', () => onIdea(idea));
     elements.storyIdeas.appendChild(button);
   }
+}
+
+export function setNudgeIdeaPlaceholder(idea) {
+  elements.nudgeInput.placeholder = `Write a line involving ${idea}...`;
+}
+
+export function resetNudgePlaceholder() {
+  elements.nudgeInput.placeholder = DEFAULT_NUDGE_PLACEHOLDER;
 }
 
 export function showStoryReaction(beat) {
@@ -441,7 +450,7 @@ export function showMode1Introduction(onDismiss) {
 export function showMode2Introduction(onDismiss) {
   elements.introTitle.textContent = 'Welcome to Mode 2';
   elements.introText.innerHTML = `
-    <p>Your story goal is visible above the passage. Add a move of up to 20 words, or choose an idea to get started. The AI writes one sentence showing what happens because of your move.</p>
+    <p>Your story goal is visible above the passage. Add a move of up to 20 words, or choose an idea for inspiration. The AI writes one sentence showing what happens because of your move.</p>
     <p>A separate AI judge rates how strongly the story points toward the goal. Aim for 80/100 within six turns. The fit score is a subjective rating, not a probability.</p>
   `;
 
@@ -663,6 +672,7 @@ export function clearGameUI() {
   hide(elements.scoreDisplay);
   hide(elements.roundDisplay);
   elements.nudgeInput.value = '';
+  resetNudgePlaceholder();
 }
 
 

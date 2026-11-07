@@ -14,7 +14,7 @@ These likelihoods are conditional on the app's continuation instruction, the pro
 
 ### Mode 2: Steer the Story
 
-The app shows a story goal from the beginning. You can write a move of up to 20 words, choose an idea to get started, and play up to six turns. After each move, a model that does not receive the goal either finishes your unfinished sentence or writes one new sentence showing a consequence of your move. The story visibly changes whether or not its rating changes.
+The app shows a story goal from the beginning. You can write a move of up to 20 words, choose an idea for inspiration, and play up to six turns. Idea chips change the writing prompt placeholder without inserting text, so the player's line can fit the current story tense and voice. After each move, a model that does not receive the goal either finishes your unfinished sentence or writes one new sentence showing a consequence of your move. The story visibly changes whether or not its rating changes.
 
 A separate model call gives a **fit score from 0 to 100** for how strongly the whole story points toward the visible goal. This is a subjective rating, **not a measured probability** that the goal will appear in a future continuation. After the baseline score, the scorer also sees the previous score and latest turn so it can make smaller, more responsive changes rather than re-rating the whole story flat. A score change describes the combined player move and AI continuation; it is not proof that one phrase alone caused the change. Reaching 80/100 after a turn ends the game early. The summary includes the player's moves, the AI's continuations, and a specific example of how the story changed. An optional AI analysis is prompted to recognize that the player knew the goal throughout.
 

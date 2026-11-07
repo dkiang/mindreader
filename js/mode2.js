@@ -65,8 +65,7 @@ export async function startGame() {
   ui.setMode2Goal(target, CONFIG.mode2.ideas[target], idea => {
     if (!gameState.isActive || gameState.isBusy) return;
     const input = ui.getElements().nudgeInput;
-    input.value = idea;
-    input.dispatchEvent(new Event('input', { bubbles: true }));
+    ui.setNudgeIdeaPlaceholder(idea);
     input.focus();
   });
   ui.initMode2Visualizations(gameState.maxTurns);
@@ -151,6 +150,7 @@ async function handleNudgeSubmit() {
     ui.addPathSegment(gameState.currentTurn, score, change);
     ui.updateVisualFeedback(change, score);
     elements.nudgeInput.value = '';
+    ui.resetNudgePlaceholder();
     ui.resetWordCounter();
 
     if (gameState.hasWon || gameState.currentTurn >= gameState.maxTurns) {
@@ -235,6 +235,7 @@ export function reset() {
   ui.hideSummaryModal();
   const elements = ui.getElements();
   elements.nudgeInput.value = '';
+  ui.resetNudgePlaceholder();
   elements.nudgeInput.disabled = false;
   elements.submitNudgeBtn.disabled = true;
   ui.resetWordCounter();
