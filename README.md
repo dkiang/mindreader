@@ -6,7 +6,7 @@ An interactive app for exploring model tokens and collaboratively steering a sho
 
 ### Mode 1: Guess the Next Word
 
-The server asks `gpt-6-luna` to continue a starting prompt and requests up to ten generated tokens with log probabilities. Each round asks you to identify a complete word generated at one token position in **the same response**. Positions containing fragments or punctuation are skipped as rounds, but their generated text is added to the passage before the next question. A word must start at a word boundary, and the next generated token must confirm its end. Choices and probability rows contain only word-shaped tokens that start at a word boundary. Leading spaces are hidden, and eligible alternatives that differ only by leading spaces share one choice and one probability row. A game may have fewer than five rounds.
+The server asks `gpt-4o-mini` to continue a starting prompt and requests up to ten generated tokens with log probabilities. Each round asks you to identify a complete word generated at one token position in **the same response**. Positions containing fragments or punctuation are skipped as rounds, but their generated text is added to the passage before the next question. A word must start at a word boundary, and the next generated token must confirm its end. Choices and probability rows contain only word-shaped tokens that start at a word boundary. Leading spaces are hidden, and eligible alternatives that differ only by leading spaces share one choice and one probability row. A game may have fewer than five rounds.
 
 After each guess, the table shows the eligible alternatives returned by the API for that token position, plus the sampled token if it was outside the returned top list. Each raw token probability is `exp(logprob)`; probabilities of alternatives with the same visible text are added. **All other tokens** includes the remaining probability mass, fragments, punctuation, and space-only alternatives. The displayed values are rounded to tenths of a percent and allocated so the table totals 100.0%. The app does not rescale the listed tokens to pretend they are the entire distribution. The model's generated choice is labeled only when it is not the highest-probability visible choice. The API does not reveal how an unchosen alternative would continue, so its displayed token may have been followed by another token in a hypothetical continuation.
 
@@ -27,7 +27,7 @@ For local testing, install dependencies and use `vercel dev` with a development 
 ## Configuration and usage
 
 - Starting prompts, round count, story goals, ideas, and move limit are in `js/config.js`.
-- The model and request parameters are in `api/chat.js`. The default model is `gpt-6-luna`; set `OPENAI_MODEL` in the server environment to override it. Mode 1 requests 10 alternative tokens per position and uses temperature 0.
+- The model and request parameters are in `api/chat.js`. The default model is `gpt-4o-mini`; set `OPENAI_MODEL` in the server environment to override it. Set `OPENAI_TOKEN_SEQUENCE_MODEL` only if you have verified that model supports Mode 1's `logprobs` and `top_logprobs` request. Mode 1 requests 10 alternative tokens per position and uses temperature 0.
 - Mode 1 makes one model call per game. Mode 2 makes one call for the baseline, two per submitted story move (continuation and rating), and one optional analysis call at the end. Check the OpenAI Usage Dashboard for actual costs.
 
 ## Source of token probabilities

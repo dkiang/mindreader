@@ -17,6 +17,7 @@ test('server requests one continuation with per-position log probabilities', asy
   process.env.OPENAI_API_KEY = 'sk-test-only';
   process.env.OPENAI_BASE_URL = `http://127.0.0.1:${server.address().port}/v1`;
   delete process.env.OPENAI_MODEL;
+  delete process.env.OPENAI_TOKEN_SEQUENCE_MODEL;
   delete process.env.UPSTASH_REDIS_REST_URL;
   delete process.env.UPSTASH_REDIS_REST_TOKEN;
 
@@ -30,8 +31,8 @@ test('server requests one continuation with per-position log probabilities', asy
 
   assert.equal(res.code, 200);
   assert.equal(requests.length, 1);
-  assert.equal(requests[0].model, 'gpt-6-luna');
-  assert.equal(requests[0].reasoning_effort, 'none');
+  assert.equal(requests[0].model, 'gpt-4o-mini');
+  assert.equal(requests[0].reasoning_effort, undefined);
   assert.equal(requests[0].max_tokens, 5);
   assert.equal(requests[0].logprobs, true);
   assert.equal(requests[0].top_logprobs, 10);
@@ -44,8 +45,8 @@ test('server requests one continuation with per-position log probabilities', asy
   const scoreRes = { status: res.status, json: res.json };
   await handler(scoreReq, scoreRes);
   assert.equal(scoreRes.code, 200);
-  assert.equal(requests[1].model, 'gpt-6-luna');
-  assert.equal(requests[1].reasoning_effort, 'none');
+  assert.equal(requests[1].model, 'gpt-4o-mini');
+  assert.equal(requests[1].reasoning_effort, undefined);
   assert.equal(requests[1].logprobs, undefined);
   assert.match(requests[1].messages[0].content, /not a probability/);
   assert.match(requests[1].messages[0].content, /full scale/);

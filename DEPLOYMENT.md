@@ -14,7 +14,8 @@ The frontend calls `api/chat` relative to the page URL, so a deployment under `/
 ## Optional environment variables
 
 - `ALLOWED_ORIGINS`: Comma-separated allowed browser origins. The default allows `https://www.kiang.net`, `https://kiang.net`, and `http://localhost:3000`. The deployment's own Vercel URL is also allowed for preview testing. Set this when using a different domain.
-- `OPENAI_MODEL`: Overrides the default model, currently `gpt-6-luna`. Keep a compatible Chat Completions text model if you change it; Mode 1 depends on `logprobs` and `top_logprobs`.
+- `OPENAI_MODEL`: Overrides the default model, currently `gpt-4o-mini`. Keep a compatible Chat Completions text model if you change it.
+- `OPENAI_TOKEN_SEQUENCE_MODEL`: Optional override just for Mode 1. Only set this after verifying the model supports `logprobs` and `top_logprobs`; otherwise Mode 1 will show "Unable to load model tokens."
 - `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN`: When both are set, the function enforces 30 requests per IP per minute and 300 per IP per day using Upstash. Without them, it enforces a best-effort 30 requests per IP per minute in each serverless instance's memory.
 
 The origin check limits ordinary cross-site browser requests but does not authenticate users. A script can set its own `Origin` header. The IP limits may affect many students behind one school network address; adjust the limits in `api/chat.js` if that is your use case.
@@ -24,7 +25,7 @@ The origin check limits ordinary cross-site browser requests but does not authen
 - Mode 1: one Chat Completions request for up to ten generated tokens and their token likelihoods, with up to five visible rounds.
 - Mode 2: one request for the starting fit score, two for each story move (continuation and fit score), and an optional analysis request at the end.
 
-Check the OpenAI Usage Dashboard for current charges. The model is configured in `api/chat.js`, defaults to `gpt-6-luna`, and can be overridden with `OPENAI_MODEL`.
+Check the OpenAI Usage Dashboard for current charges. The model is configured in `api/chat.js`, defaults to `gpt-4o-mini`, and can be overridden with `OPENAI_MODEL`.
 
 ## Troubleshooting
 
