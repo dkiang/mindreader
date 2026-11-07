@@ -31,8 +31,8 @@ export async function getTokenSequence(prompt, count = CONFIG.mode1.rounds) {
 }
 
 /** This is a model rating of target fit, not an event probability. */
-export async function getTargetFitScore(context, target) {
-  const response = await callTask('targetFitScore', { context, target });
+export async function getTargetFitScore(context, target, turn = {}) {
+  const response = await callTask('targetFitScore', { context, target, ...turn });
   const content = response?.choices?.[0]?.message?.content?.trim();
   if (!/^(100|[1-9]?\d)%?$/.test(content || '')) {
     throw new Error('The model returned an invalid fit score');

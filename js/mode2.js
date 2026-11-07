@@ -24,6 +24,12 @@ function emptyState() {
 let version = 0;
 let gameState = emptyState();
 
+function appendBeat(context, beat) {
+  const trimmedBeat = beat.trim();
+  const separator = /^[,.;:!?]/.test(trimmedBeat) ? '' : ' ';
+  return `${context}${separator}${trimmedBeat}`;
+}
+
 export function init() {
   const elements = ui.getElements();
   elements.submitNudgeBtn.addEventListener('click', handleNudgeSubmit);
@@ -120,8 +126,12 @@ async function handleNudgeSubmit() {
   try {
     const beat = await getStoryBeat(proposedContext, nudge);
     if (currentVersion !== version) return;
-    const completedContext = `${proposedContext} ${beat}`;
-    const score = await getTargetFitScore(completedContext, gameState.target);
+    const completedContext = appendBeat(proposedContext, beat);
+    const score = await getTargetFitScore(completedContext, gameState.target, {
+      previousScore: gameState.currentScore,
+      latestMove: nudge,
+      latestBeat: beat
+    });
     if (currentVersion !== version) return;
 
     const previousScore = gameState.currentScore;

@@ -40,7 +40,14 @@ test('server requests one continuation with per-position log probabilities', asy
 
   const scoreReq = {
     ...req,
-    body: { task: 'targetFitScore', context: 'The map revealed a secret', target: 'discovery' }
+    body: {
+      task: 'targetFitScore',
+      context: 'The map revealed a secret',
+      target: 'discovery',
+      previousScore: 30,
+      latestMove: 'Someone opened it.',
+      latestBeat: 'A hidden cave appeared.'
+    }
   };
   const scoreRes = { status: res.status, json: res.json };
   await handler(scoreReq, scoreRes);
@@ -50,6 +57,8 @@ test('server requests one continuation with per-position log probabilities', asy
   assert.equal(requests[1].logprobs, undefined);
   assert.match(requests[1].messages[0].content, /not a probability/);
   assert.match(requests[1].messages[0].content, /full scale/);
+  assert.match(requests[1].messages[1].content, /Previous fit score: 30\/100/);
+  assert.match(requests[1].messages[1].content, /Use 0 change only/);
   assert.match(requests[1].messages[1].content, /Target concept: discovery/);
 
   const beatRes = { status: res.status, json: res.json };
@@ -61,6 +70,16 @@ test('server requests one continuation with per-position log probabilities', asy
   assert.match(requests[2].messages[0].content, /collaborative story partner/);
   assert.ok(!requests[2].messages[1].content.includes('discovery'));
 
+  const partialBeatRes = { status: res.status, json: res.json };
+  await handler({
+    ...req,
+    body: { task: 'storyBeat', context: 'He wondered how he could', move: 'how he could' }
+  }, partialBeatRes);
+  assert.equal(partialBeatRes.code, 200);
+  assert.match(requests[3].messages[0].content, /unfinished sentence/);
+  assert.match(requests[3].messages[0].content, /Do not start a new sentence/);
+  assert.match(requests[3].messages[1].content, /Words to append/);
+
   const analysisRes = { status: res.status, json: res.json };
   await handler({
     ...req,
@@ -71,6 +90,6 @@ test('server requests one continuation with per-position log probabilities', asy
     }
   }, analysisRes);
   assert.equal(analysisRes.code, 200);
-  assert.match(requests[3].messages[0].content, /player knows the target/);
-  assert.match(requests[3].messages[1].content, /A hidden cave appeared/);
+  assert.match(requests[4].messages[0].content, /player knows the target/);
+  assert.match(requests[4].messages[1].content, /A hidden cave appeared/);
 });
