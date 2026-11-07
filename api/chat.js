@@ -6,7 +6,7 @@ import OpenAI from 'openai';
 import { Ratelimit } from '@upstash/ratelimit';
 import { Redis } from '@upstash/redis';
 
-const MODEL = 'gpt-4o-mini';
+const DEFAULT_MODEL = 'gpt-6-luna';
 const DEFAULT_ALLOWED_ORIGINS = 'https://www.kiang.net,https://kiang.net,http://localhost:3000';
 const memoryRateLimits = new Map();
 let upstashLimiters;
@@ -227,7 +227,12 @@ export default async function handler(req, res) {
 
   try {
     const client = new OpenAI({ apiKey });
-    const response = await client.chat.completions.create({ model: MODEL, ...taskRequest });
+    const model = process.env.OPENAI_MODEL || DEFAULT_MODEL;
+    const response = await client.chat.completions.create({
+      model,
+      reasoning_effort: model.startsWith('gpt-6') ? 'none' : undefined,
+      ...taskRequest
+    });
     return res.status(200).json(response);
   } catch (error) {
     console.error('OpenAI API Error:', error);
