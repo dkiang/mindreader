@@ -14,6 +14,7 @@ let gameState = {
   currentPrompt: '',
   fullText: '',
   hasResponseText: false,
+  sequence: [],
   frames: []
 };
 
@@ -30,6 +31,7 @@ export function startGame() {
     currentPrompt: prompt,
     fullText: prompt,
     hasResponseText: false,
+    sequence: [],
     frames: []
   };
 
@@ -44,10 +46,11 @@ export function startGame() {
 async function loadSequence(currentVersion) {
   ui.showLoading();
   try {
-    const sequence = await getTokenSequence(gameState.currentPrompt, Math.min(CONFIG.mode1.rounds * 2, 10));
+    const sequence = await getTokenSequence(gameState.currentPrompt, CONFIG.mode1.continuationTokens);
     if (currentVersion !== version) return;
     const frames = buildWholeWordFrames(sequence, CONFIG.mode1.rounds);
     if (frames.length === 0) throw new Error('The model returned no complete word choices');
+    gameState.sequence = sequence;
     gameState.frames = frames;
     gameState.maxRounds = frames.length;
     ui.updateScore(0, frames.length);
@@ -111,6 +114,7 @@ function handleTokenSelection(selected, currentVersion) {
     () => {
       if (currentVersion !== version || !gameState.isActive) return;
       if (gameState.currentRound >= gameState.maxRounds) {
+        revealRemainingContinuation(frame);
         endGame();
       } else {
         gameState.currentRound++;
@@ -120,6 +124,14 @@ function handleTokenSelection(selected, currentVersion) {
       }
     }
   );
+}
+
+function revealRemainingContinuation(finalFrame) {
+  const tail = gameState.sequence
+    .slice(finalFrame.index + 1)
+    .map(position => position.chosenToken)
+    .join('');
+  appendResponseText(tail);
 }
 
 function endGame() {

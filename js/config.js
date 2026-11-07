@@ -7,6 +7,7 @@ export const CONFIG = {
   // Mode 1 Settings - "Guess the Next Word"
   mode1: {
     rounds: 5,                    // Maximum complete-word rounds per game
+    continuationTokens: 60,        // Generated tokens to reveal after the playable rounds
 
     // Starting prompts for Mode 1
     startingPrompts: [
@@ -106,14 +107,38 @@ export function getRandomItem(array) {
   return array[Math.floor(Math.random() * array.length)];
 }
 
+const promptDecks = new Map();
+
+function refillPromptDeck(mode, previousPrompt) {
+  const prompts = mode === 'mode1'
+    ? CONFIG.mode1.startingPrompts
+    : CONFIG.mode2.startingPrompts;
+  const deck = [...prompts];
+
+  for (let i = deck.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [deck[i], deck[j]] = [deck[j], deck[i]];
+  }
+
+  if (deck.length > 1 && deck[0] === previousPrompt) {
+    const swapIndex = deck.findIndex(prompt => prompt !== previousPrompt);
+    [deck[0], deck[swapIndex]] = [deck[swapIndex], deck[0]];
+  }
+
+  promptDecks.set(mode, deck);
+  return deck;
+}
+
 // Helper function to get a random starting prompt for a mode
 export function getRandomPrompt(mode) {
-  if (mode === 'mode1') {
-    return getRandomItem(CONFIG.mode1.startingPrompts);
-  } else if (mode === 'mode2') {
-    return getRandomItem(CONFIG.mode2.startingPrompts);
-  }
-  return '';
+  if (mode !== 'mode1' && mode !== 'mode2') return '';
+  const previousPrompt = promptDecks.get(`${mode}:previous`);
+  const deck = promptDecks.get(mode)?.length
+    ? promptDecks.get(mode)
+    : refillPromptDeck(mode, previousPrompt);
+  const prompt = deck.shift();
+  promptDecks.set(`${mode}:previous`, prompt);
+  return prompt;
 }
 
 // Helper function to count words in a string

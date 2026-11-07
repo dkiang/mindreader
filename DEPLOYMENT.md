@@ -22,7 +22,7 @@ The origin check limits ordinary cross-site browser requests but does not authen
 
 ## What is billed
 
-- Mode 1: one Chat Completions request for up to ten generated tokens and their token likelihoods, with up to five visible rounds.
+- Mode 1: one Chat Completions request for up to 60 generated tokens and their token likelihoods, with up to five visible rounds.
 - Mode 2: one request for the starting fit score, two for each story move (continuation and fit score), and an optional analysis request at the end.
 
 Check the OpenAI Usage Dashboard for current charges. The model is configured in `api/chat.js`, defaults to `gpt-4o-mini`, and can be overridden with `OPENAI_MODEL`.

@@ -77,6 +77,7 @@ test('word rounds skip generated fragments while keeping the passage intact', ()
 
   const frames = buildWholeWordFrames(sequence, 5);
   assert.equal(frames.length, 1);
+  assert.equal(frames[0].index, 3);
   assert.equal(frames[0].chosenLabel, 'plan');
   assert.equal(frames[0].precedingText, 'Important');
   assert.deepEqual(frames[0].distribution.map(item => item.token), ['plan', 'path']);

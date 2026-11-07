@@ -4,6 +4,8 @@
 
 import { displayToken, percentageTenths } from './token-math.js';
 
+const START_PROMPT_TEXT = 'Click Start Game to Begin';
+
 // DOM Element Cache
 const elements = {};
 
@@ -220,7 +222,7 @@ export function appendToCurrentText(text) {
  * Clear the current text
  */
 export function clearCurrentText() {
-  elements.currentText.textContent = '';
+  elements.currentText.textContent = START_PROMPT_TEXT;
 }
 
 /**

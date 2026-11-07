@@ -88,8 +88,8 @@ function buildTaskRequest(body) {
   switch (body.task) {
     case 'tokenSequence': {
       const prompt = readString(body.prompt, 'prompt', 2000);
-      if (!Number.isInteger(body.count) || body.count < 1 || body.count > 10) {
-        throw new Error('count must be an integer from 1 to 10');
+      if (!Number.isInteger(body.count) || body.count < 1 || body.count > 80) {
+        throw new Error('count must be an integer from 1 to 80');
       }
       return {
         messages: [

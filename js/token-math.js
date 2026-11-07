@@ -63,6 +63,7 @@ export function buildWholeWordFrames(sequence, maxRounds) {
       frames.push({
         ...position,
         ...visible,
+        index,
         chosenLabel: displayToken(position.chosenToken),
         precedingText
       });
